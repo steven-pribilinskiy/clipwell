@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/cli/">
+    <Project Path="cli/Clipwell.Cli.csproj" />
+  </Folder>
+  <Folder Name="/daemon/">
+    <Project Path="daemon/Clipwell.Daemon.csproj" />
+  </Folder>
+  <Folder Name="/protocol/">
+    <Project Path="protocol/Clipwell.Protocol.csproj" />
+  </Folder>
+</Solution>

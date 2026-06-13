@@ -1,0 +1,25 @@
+# Build output
+bin/
+obj/
+publish/
+*.user
+
+# Rider / VS
+.idea/
+.vs/
+*.suo
+
+# Docs sites (Phase 5/6) — Node
+node_modules/
+.next/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local runtime data
+*.db
+*.db-wal
+*.db-shm
+*.log
