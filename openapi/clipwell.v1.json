@@ -1,0 +1,171 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Clipwell.Daemon | v1",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8787/"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Clipwell.Daemon"
+        ],
+        "summary": "Liveness probe and basic daemon info.",
+        "operationId": "Health",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/clipboard": {
+      "get": {
+        "tags": [
+          "Clipwell.Daemon"
+        ],
+        "summary": "List clipboard history, newest first. Page back with `before` (a timestamp).",
+        "operationId": "GetHistory",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/clipboard/settings": {
+      "get": {
+        "tags": [
+          "Clipwell.Daemon"
+        ],
+        "summary": "Get daemon settings (retention).",
+        "operationId": "GetSettings",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Clipwell.Daemon"
+        ],
+        "summary": "Update daemon settings (retention).",
+        "operationId": "SaveSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClipboardSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/clipboard/delete": {
+      "post": {
+        "tags": [
+          "Clipwell.Daemon"
+        ],
+        "summary": "Delete one history item by its timestamp.",
+        "operationId": "DeleteItem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/clipboard/clear": {
+      "post": {
+        "tags": [
+          "Clipwell.Daemon"
+        ],
+        "summary": "Delete all history.",
+        "operationId": "ClearHistory",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ClipboardSettings": {
+        "type": "object",
+        "properties": {
+          "retentionDays": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "DeleteRequest": {
+        "required": [
+          "timestamp"
+        ],
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Clipwell.Daemon"
+    }
+  ]
+}

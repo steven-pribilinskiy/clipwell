@@ -16,7 +16,17 @@ public sealed class WindowsClipboardWatcher : IClipboardWatcher
     private const int WM_CLIPBOARDUPDATE = 0x031D;
     private const int WM_DESTROY = 0x0002;
     private const uint CF_UNICODETEXT = 13;
+    private const uint CF_DIB = 8;
     private static readonly IntPtr HWND_MESSAGE = new(-3);
+
+    private readonly string _cacheDir;
+    private readonly uint _cfHtml; // registered "HTML Format"
+
+    public WindowsClipboardWatcher(string cacheDir)
+    {
+        _cacheDir = cacheDir;
+        _cfHtml = RegisterClipboardFormat("HTML Format");
+    }
 
     public event Action<StoreRow>? Changed;
 
@@ -109,17 +119,107 @@ public sealed class WindowsClipboardWatcher : IClipboardWatcher
     private void CaptureCurrent()
     {
         var text = ReadUnicodeText();
-        if (text is null) return; // non-text capture (image/other) handled in a later phase
+        var html = ReadHtml();
+        var now = DateTimeOffset.UtcNow;
+        var imagePath = ReadAndSaveImage(now.ToUnixTimeMilliseconds());
 
-        var now = DateTimeOffset.UtcNow.ToString("o");
+        // Nothing useful on the clipboard (e.g. a file drop or a format we don't read yet).
+        if (text is null && html is null && imagePath is null) return;
+
+        var formats = new List<string>();
+        if (text is not null) formats.Add("text");
+        if (html is not null) formats.Add("html");
+        if (imagePath is not null) formats.Add("image");
+
         Changed?.Invoke(new StoreRow
         {
-            Timestamp = now,
+            Timestamp = now.ToString("o"),
             TextContent = text,
-            TextLength = text.Length,
-            HasImage = false,
-            Formats = ["text"],
+            TextLength = text?.Length ?? 0,
+            HtmlContent = html,
+            HasImage = imagePath is not null,
+            ImagePath = imagePath,
+            Formats = formats,
         });
+    }
+
+    private string? ReadHtml()
+    {
+        if (_cfHtml == 0 || !IsClipboardFormatAvailable(_cfHtml)) return null;
+        if (!OpenClipboard(IntPtr.Zero)) return null;
+        try
+        {
+            var handle = GetClipboardData(_cfHtml);
+            if (handle == IntPtr.Zero) return null;
+            var ptr = GlobalLock(handle);
+            if (ptr == IntPtr.Zero) return null;
+            try
+            {
+                // CF_HTML is UTF-8 bytes with a descriptor header; store as-is.
+                var size = (int)(ulong)GlobalSize(handle);
+                if (size <= 0) return null;
+                var bytes = new byte[size];
+                Marshal.Copy(ptr, bytes, 0, size);
+                var s = System.Text.Encoding.UTF8.GetString(bytes).TrimEnd('\0');
+                return string.IsNullOrWhiteSpace(s) ? null : s;
+            }
+            finally { GlobalUnlock(handle); }
+        }
+        finally { CloseClipboard(); }
+    }
+
+    private string? ReadAndSaveImage(long stampMs)
+    {
+        if (!IsClipboardFormatAvailable(CF_DIB)) return null;
+        if (!OpenClipboard(IntPtr.Zero)) return null;
+        try
+        {
+            var handle = GetClipboardData(CF_DIB);
+            if (handle == IntPtr.Zero) return null;
+            var ptr = GlobalLock(handle);
+            if (ptr == IntPtr.Zero) return null;
+            try
+            {
+                var size = (int)(ulong)GlobalSize(handle);
+                if (size <= 0) return null;
+                var dib = new byte[size];
+                Marshal.Copy(ptr, dib, 0, size);
+                return SaveDibAsPng(dib, stampMs);
+            }
+            finally { GlobalUnlock(handle); }
+        }
+        catch
+        {
+            return null; // never let an image-decode failure break capture
+        }
+        finally { CloseClipboard(); }
+    }
+
+    // A CF_DIB is a BMP without the 14-byte BITMAPFILEHEADER. Prepend one so
+    // System.Drawing can decode it, then re-encode as PNG into the cache dir.
+    private string? SaveDibAsPng(byte[] dib, long stampMs)
+    {
+        const int fileHeaderSize = 14;
+        // bfOffBits = fileHeader + DIB header + color table. Read biSize +
+        // biClrUsed/biBitCount from the BITMAPINFOHEADER to compute the table size.
+        var headerSize = BitConverter.ToInt32(dib, 0);
+        var bitCount = BitConverter.ToInt16(dib, 14);
+        var clrUsed = BitConverter.ToInt32(dib, 32);
+        var paletteEntries = clrUsed != 0 ? clrUsed : (bitCount <= 8 ? 1 << bitCount : 0);
+        var offBits = fileHeaderSize + headerSize + paletteEntries * 4;
+
+        var bmp = new byte[fileHeaderSize + dib.Length];
+        bmp[0] = (byte)'B';
+        bmp[1] = (byte)'M';
+        BitConverter.GetBytes(bmp.Length).CopyTo(bmp, 2);
+        BitConverter.GetBytes(offBits).CopyTo(bmp, 10);
+        dib.CopyTo(bmp, fileHeaderSize);
+
+        using var ms = new MemoryStream(bmp);
+        using var image = System.Drawing.Image.FromStream(ms);
+        var path = Path.Combine(_cacheDir, $"img-{stampMs}.png");
+        image.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+        return path;
     }
 
     private static string? ReadUnicodeText()
@@ -234,6 +334,12 @@ public sealed class WindowsClipboardWatcher : IClipboardWatcher
 
     [DllImport("kernel32.dll")]
     private static extern bool GlobalUnlock(IntPtr hMem);
+
+    [DllImport("kernel32.dll")]
+    private static extern UIntPtr GlobalSize(IntPtr hMem);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern uint RegisterClipboardFormat(string lpszFormat);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr GetModuleHandle(string? lpModuleName);

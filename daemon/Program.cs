@@ -16,13 +16,16 @@ builder.Services.ConfigureHttpJsonOptions(o =>
     o.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 });
 
+builder.Services.AddOpenApi("v1");
+
 builder.Services.AddSingleton<HistoryStore>();
 builder.Services.AddSingleton<ClipboardHub>();
-builder.Services.AddSingleton<IClipboardWatcher>(_ =>
-    OperatingSystem.IsWindows() ? new WindowsClipboardWatcher() : new NullClipboardWatcher());
+builder.Services.AddSingleton<IClipboardWatcher>(sp =>
+    ClipboardWatcherFactory.Create(sp.GetRequiredService<HistoryStore>().CacheDir));
 
 var app = builder.Build();
 app.UseWebSockets();
+app.MapOpenApi("/openapi/v1.json"); // machine-readable API spec (feeds the docs site)
 
 var store = app.Services.GetRequiredService<HistoryStore>();
 var hub = app.Services.GetRequiredService<ClipboardHub>();
@@ -80,26 +83,42 @@ app.Lifetime.ApplicationStopping.Register(() => watcher.Dispose());
 
 // ── REST ────────────────────────────────────────────────────────────────
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok", db = store.DbPath, subscribers = hub.SubscriberCount }));
+app.MapGet("/health", () => Results.Ok(new { status = "ok", db = store.DbPath, subscribers = hub.SubscriberCount }))
+    .WithName("Health").WithSummary("Liveness probe and basic daemon info.");
 
 app.MapGet("/api/clipboard", (int? limit, string? before) =>
 {
     var items = store.QueryPage(Math.Clamp(limit ?? 200, 1, 1000), before);
     return Results.Ok(new { items });
-});
+})
+    .WithName("GetHistory")
+    .WithSummary("List clipboard history, newest first. Page back with `before` (a timestamp).");
 
-app.MapGet("/api/clipboard/settings", () => Results.Ok(store.LoadSettings()));
+app.MapGet("/api/clipboard/settings", () => Results.Ok(store.LoadSettings()))
+    .WithName("GetSettings").WithSummary("Get daemon settings (retention).");
 
 app.MapPost("/api/clipboard/settings", (ClipboardSettings settings) =>
 {
     store.SaveSettings(settings);
     return Results.Ok(settings);
-});
+})
+    .WithName("SaveSettings").WithSummary("Update daemon settings (retention).");
 
 app.MapPost("/api/clipboard/delete", (DeleteRequest req) =>
-    Results.Ok(new { deleted = store.DeleteByTimestamp(req.Timestamp) }));
+    Results.Ok(new { deleted = store.DeleteByTimestamp(req.Timestamp) }))
+    .WithName("DeleteItem").WithSummary("Delete one history item by its timestamp.");
 
-app.MapPost("/api/clipboard/clear", () => Results.Ok(new { deleted = store.ClearAll() }));
+app.MapPost("/api/clipboard/clear", () => Results.Ok(new { deleted = store.ClearAll() }))
+    .WithName("ClearHistory").WithSummary("Delete all history.");
+
+app.MapGet("/api/clipboard/image/{timestamp}", (string timestamp) =>
+{
+    var path = store.GetImagePath(timestamp);
+    return path is not null && File.Exists(path)
+        ? Results.File(path, "image/png")
+        : Results.NotFound();
+})
+    .WithName("GetImage").WithSummary("Fetch the cached PNG for an image item, by timestamp.");
 
 // ── SSE ─────────────────────────────────────────────────────────────────
 
@@ -124,7 +143,8 @@ app.MapGet("/api/clipboard/stream", async (HttpContext ctx) =>
     {
         hub.Unsubscribe(id);
     }
-});
+})
+    .WithName("StreamSse").WithSummary("Server-Sent Events stream of clipboard.changed events.");
 
 // ── WebSocket ─────────────────────────────────────────────────────────────
 

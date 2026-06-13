@@ -13,6 +13,9 @@ rewrite — the WPF code is reference only, kept in the windows-settings repo.
 - `ui/` — Avalonia 12 picker (thin client; fetches `/api/clipboard`, live-updates
   over the WS). MVVM via CommunityToolkit.Mvvm. See ADR-0002.
 - `cli/` — reference API consumer.
+- `mcp/` — stdio MCP server (ModelContextProtocol SDK) exposing clipboard tools;
+  proxies to the daemon over REST. See ADR-0003.
+- `openapi/clipwell.v1.json` — checked-in spec, regenerated from `GET /openapi/v1.json`.
 - `engineering/content/adr/` — Architecture Decision Records (MADR). Write one per
   decision, at decision time (docs-as-you-build).
 

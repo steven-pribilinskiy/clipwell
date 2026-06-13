@@ -31,6 +31,8 @@ public sealed class HistoryStore : IDisposable
         Directory.CreateDirectory(storeDir);
         _dbPath = Path.Combine(storeDir, "history.db");
         _settingsPath = Path.Combine(storeDir, "clipboard-settings.json");
+        CacheDir = Path.Combine(storeDir, "cache");
+        Directory.CreateDirectory(CacheDir);
 
         _conn = new SqliteConnection($"Data Source={_dbPath}");
         _conn.Open();
@@ -55,6 +57,9 @@ public sealed class HistoryStore : IDisposable
     }
 
     public string DbPath => _dbPath;
+
+    /// <summary>Directory for cached images captured from the clipboard.</summary>
+    public string CacheDir { get; }
 
     // ── Write ───────────────────────────────────────────────────────────
 
@@ -148,6 +153,17 @@ public sealed class HistoryStore : IDisposable
             using var cmd = _conn.CreateCommand();
             cmd.CommandText = "DELETE FROM items";
             return cmd.ExecuteNonQuery();
+        }
+    }
+
+    public string? GetImagePath(string timestamp)
+    {
+        lock (_gate)
+        {
+            using var cmd = _conn.CreateCommand();
+            cmd.CommandText = "SELECT image_path FROM items WHERE timestamp = $ts AND image_path IS NOT NULL LIMIT 1";
+            cmd.Parameters.AddWithValue("$ts", timestamp);
+            return cmd.ExecuteScalar() as string;
         }
     }
 

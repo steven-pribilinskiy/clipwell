@@ -5,6 +5,9 @@
   <Folder Name="/daemon/">
     <Project Path="daemon/Clipwell.Daemon.csproj" />
   </Folder>
+  <Folder Name="/mcp/">
+    <Project Path="mcp/Clipwell.Mcp.csproj" />
+  </Folder>
   <Folder Name="/protocol/">
     <Project Path="protocol/Clipwell.Protocol.csproj" />
   </Folder>

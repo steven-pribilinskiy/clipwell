@@ -1,0 +1,39 @@
+# ADR-0003: One history, three protocols (REST + live + MCP)
+
+- Status: accepted
+- Date: 2026-06-14
+- Deciders: project owner
+
+## Context
+
+A core goal is that Clipwell's history is queryable and driveable by *any* app: the
+first-party picker, a CLI, editor extensions, and AI agents. Different consumers want
+different shapes — one-shot requests, a live feed, or an agent tool protocol.
+
+## Decision
+
+Expose the same daemon-owned history through three surfaces, all backed by the one
+SQLite store:
+
+- **REST** for one-shot calls (`GET /api/clipboard`, settings, image fetch, delete,
+  clear). The contract is published as **OpenAPI** at `GET /openapi/v1.json` and
+  checked into the repo at `openapi/clipwell.v1.json` so the docs site's API
+  reference is generated from the single source of truth.
+- **Live** via Server-Sent Events (`/api/clipboard/stream`) and WebSocket
+  (`/api/clipboard/ws`), both emitting `clipboard.changed`. SSE for simple
+  read-only listeners, WebSocket for richer/bidirectional clients. They share one
+  in-process fan-out hub.
+- **MCP** via a separate stdio server (`mcp/`) using the ModelContextProtocol C#
+  SDK. Stdio is what Claude Desktop / Claude Code spawn per session; the server is
+  stateless and proxies to the daemon's REST API, so it stays trivially in sync.
+
+## Consequences
+
+- The picker, CLI, and MCP server are all *clients* of the same REST/live surface —
+  no privileged backchannel. This keeps the public API honest (we use it ourselves).
+- MCP over HTTP/SSE (for long-lived/remote agents) is deferred; stdio covers the
+  primary AI-client use case today.
+- Capture on Windows now includes text, HTML, and images (DIB→PNG in the cache dir,
+  served via `GET /api/clipboard/image/{timestamp}`). macOS/Linux watchers are
+  implemented as a polling fallback over `pbpaste`/`wl-paste`/`xclip` (text-only for
+  now) but are not yet exercised in CI.

@@ -38,7 +38,22 @@ Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 dotnet build
 dotnet run --project daemon      # clipboard daemon on http://127.0.0.1:8787
 dotnet run --project ui          # the picker (connects to the daemon)
+dotnet run --project cli -- list # reference CLI client
 ```
+
+## API surface
+
+The daemon exposes the same history three ways:
+
+- **REST** — `GET /api/clipboard`, `/settings`, `/image/{ts}`, `POST /delete`, `/clear`.
+  Machine-readable spec at `GET /openapi/v1.json` (also checked in at
+  [`openapi/clipwell.v1.json`](./openapi/clipwell.v1.json)).
+- **Live** — `GET /api/clipboard/stream` (SSE) and `/api/clipboard/ws` (WebSocket)
+  push a `clipboard.changed` event on every capture.
+- **MCP** — the `mcp/` project is a stdio MCP server exposing `clipboard_recent`,
+  `clipboard_search`, `clipboard_get_text`, and `clipboard_clear`. Point an MCP
+  client (Claude Desktop / Claude Code) at the built `Clipwell.Mcp` executable; it
+  proxies to the running daemon (`CLIPWELL_API`, default `http://127.0.0.1:8787`).
 
 ## License
 
