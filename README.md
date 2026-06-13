@@ -36,7 +36,8 @@ Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
 ```sh
 dotnet build
-dotnet run --project daemon
+dotnet run --project daemon      # clipboard daemon on http://127.0.0.1:8787
+dotnet run --project ui          # the picker (connects to the daemon)
 ```
 
 ## License

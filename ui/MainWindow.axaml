@@ -1,0 +1,50 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Clipwell.Ui"
+        x:Class="Clipwell.Ui.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="Clipwell"
+        Width="560" Height="640"
+        WindowStartupLocation="CenterScreen"
+        TransparencyLevelHint="AcrylicBlur"
+        Background="Transparent">
+
+    <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+            CornerRadius="10" Margin="8" BoxShadow="0 8 24 0 #40000000">
+        <Grid Margin="14" RowDefinitions="Auto,*,Auto">
+
+            <!-- Search -->
+            <TextBox Grid.Row="0"
+                     Name="SearchBox"
+                     Text="{Binding SearchText, Mode=TwoWay}"
+                     PlaceholderText="Search clipboard history…"
+                     FontSize="15" CornerRadius="8" Padding="10,8" />
+
+            <!-- History list -->
+            <ListBox Grid.Row="1" Margin="0,12,0,0"
+                     Name="ItemsList"
+                     ItemsSource="{Binding Items}"
+                     SelectedItem="{Binding Selected, Mode=TwoWay}"
+                     Background="Transparent"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ClipRow">
+                        <StackPanel Spacing="2" Margin="0,2">
+                            <TextBlock Text="{Binding Preview}"
+                                       TextTrimming="CharacterEllipsis"
+                                       MaxLines="2" TextWrapping="Wrap"
+                                       FontSize="14" />
+                            <TextBlock Text="{Binding Meta}"
+                                       FontSize="11" Opacity="0.55" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Status bar -->
+            <TextBlock Grid.Row="2" Margin="2,10,2,0"
+                       Text="{Binding Status}"
+                       FontSize="11" Opacity="0.5" />
+        </Grid>
+    </Border>
+</Window>

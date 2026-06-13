@@ -1,0 +1,43 @@
+# ADR-0002: Avalonia for the picker UI
+
+- Status: accepted
+- Date: 2026-06-13
+- Deciders: project owner
+
+## Context
+
+The product is split into a headless daemon (ADR-0001) and a thin UI client. The UI
+stack was deliberately deferred so daemon work — which is UI-agnostic — could start
+first. With the daemon's REST/WS API working, the picker needs a cross-platform UI
+framework. The hard requirement is **single-digit-millisecond picker visibility** on
+Windows, macOS, and Linux, achieved via a pre-warmed hidden window that is shown on a
+global hotkey.
+
+Candidates evaluated (see the notes app, `clipwell/` library): Avalonia, Tauri
+(Rust + webview), Electron, and headless-only.
+
+## Decision
+
+**Avalonia 12.** Rationale:
+
+- It is the only candidate that reliably hits the single-digit-ms render bar on all
+  three OSs: Skia-direct rendering on a native compositor, no webview composition
+  latency (Tauri's WebKitGTK on Linux is the known weak spot; Electron ships a whole
+  Chromium).
+- One language for the whole product — daemon, UI, and the future plugin contract are
+  all C#/.NET 10. The `protocol/` project is shared directly by the UI.
+- Avalonia 12 went stable on 2026-04-07 (using 12.0.4) and is a performance/stability
+  release.
+- Free live-app MCP tooling exists (`adirh3/AvaloniaMcp`) for AI-assisted UI iteration.
+
+## Consequences
+
+- The first picker cut is a thin client: it fetches history via `GET /api/clipboard`
+  and live-updates over the `/api/clipboard/ws` WebSocket — dogfooding the public API.
+- Avalonia 12 changed the clipboard data API (`DataObject`/`DataFormats` →
+  `DataTransfer`/`DataFormat`); `IClipboard.SetTextAsync` is now an extension method in
+  `Avalonia.Input.Platform`. Noted so future work doesn't rediscover it.
+- Still to build on top of this base: the pre-warmed-window perf path, global hotkey,
+  tray icon, paste-to-source-app, and typed-item rendering. Tracked separately.
+- If the UI stack is ever reconsidered, the daemon is unaffected — it is a separate
+  process reached over HTTP/WS regardless of UI language.

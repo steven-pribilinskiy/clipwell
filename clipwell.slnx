@@ -8,4 +8,7 @@
   <Folder Name="/protocol/">
     <Project Path="protocol/Clipwell.Protocol.csproj" />
   </Folder>
+  <Folder Name="/ui/">
+    <Project Path="ui/Clipwell.Ui.csproj" />
+  </Folder>
 </Solution>

@@ -10,6 +10,8 @@ rewrite — the WPF code is reference only, kept in the windows-settings repo.
 - `protocol/` — domain model (`ClipItem`, `StoreRow`, `ClipboardSettings`) + plugin
   contracts (`IClipDetector`, `IClipAction`). No dependencies.
 - `daemon/` — ASP.NET minimal API (Kestrel). SQLite via `Microsoft.Data.Sqlite`.
+- `ui/` — Avalonia 12 picker (thin client; fetches `/api/clipboard`, live-updates
+  over the WS). MVVM via CommunityToolkit.Mvvm. See ADR-0002.
 - `cli/` — reference API consumer.
 - `engineering/content/adr/` — Architecture Decision Records (MADR). Write one per
   decision, at decision time (docs-as-you-build).
@@ -57,7 +59,14 @@ from the old `clipboard-store.ts` so existing history files keep working.
 everywhere. macOS (NSPasteboard polling) and Linux (X11/Wayland) are TODO, as are
 image/HTML capture on Windows.
 
+## Avalonia 12 gotchas
+- Clipboard: `DataObject`/`DataFormats` are obsolete → `DataTransfer`/`DataFormat`.
+  For plain text, `IClipboard.SetTextAsync` is an extension in
+  `Avalonia.Input.Platform` (add the using).
+- `TextBox.Watermark` → `PlaceholderText`.
+- Solution file is `.slnx` (XML), not `.sln`.
+
 ## Perf bar
-The picker (later phase) must reach single-digit-ms visibility via a pre-warmed
-hidden window. Instrument the show-cycle and chart real numbers in the
-engineering docs site.
+The picker must reach single-digit-ms visibility via a pre-warmed hidden window
+(shown on a global hotkey). Not yet implemented — the current picker is a normal
+window. Instrument the show-cycle and chart real numbers in the engineering docs.
