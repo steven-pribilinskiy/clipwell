@@ -15,7 +15,8 @@ agents are all just clients of the same contract. Nothing is hidden behind a pri
 - **Queryable by anything** — REST for one-shot calls, WebSocket/SSE to live-stream clipboard
   changes, MCP so Claude (and other agents) can read and act on your clipboard history.
 - **Cross-platform** — Windows, macOS, and Linux behind one clipboard-watcher interface.
-- **Fast** — the picker targets single-digit-millisecond visibility via a pre-warmed window.
+- **Fast** — the picker is pre-warmed and shows in single-digit milliseconds on the
+  global hotkey (Alt+Shift+V on Windows). It runs in the background with a tray icon.
 - **Extensible** — typed clipboard items and content-aware actions load as plugins.
 
 ## Repository layout

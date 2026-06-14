@@ -70,6 +70,9 @@ image/HTML capture on Windows.
 - Solution file is `.slnx` (XML), not `.sln`.
 
 ## Perf bar
-The picker must reach single-digit-ms visibility via a pre-warmed hidden window
-(shown on a global hotkey). Not yet implemented — the current picker is a normal
-window. Instrument the show-cycle and chart real numbers in the engineering docs.
+The picker reaches single-digit-ms visibility via a pre-warmed window shown on a
+global hotkey (Alt+Shift+V on Windows; Win+V is OS-reserved). Background app
+(tray icon, OnExplicitShutdown), single-instance via named mutex, hide-on-blur
+(disable with `CLIPWELL_NO_AUTOHIDE` for screenshot tests). Show-cycle latency is
+appended to `perf.log` in the data dir. Measured: ~170ms cold first show, ~6ms warm.
+See ADR-0004. Per-OS global hotkey lives behind `IGlobalHotkey` (Windows done).

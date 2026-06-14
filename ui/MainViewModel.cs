@@ -39,6 +39,9 @@ public sealed partial class MainViewModel : ObservableObject
             _cts.Token);
     }
 
+    /// <summary>Force a fresh load (used when the picker is re-shown).</summary>
+    public Task RefreshAsync() => ReloadAsync();
+
     partial void OnSearchTextChanged(string value) => ApplyFilter();
 
     private async Task ReloadAsync()

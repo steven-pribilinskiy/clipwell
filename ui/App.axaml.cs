@@ -1,23 +1,72 @@
+using System;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform;
+using Avalonia.Threading;
+using Clipwell.Ui.Platform;
 
 namespace Clipwell.Ui;
 
 public partial class App : Application
 {
-    public override void Initialize()
-    {
-        AvaloniaXamlLoader.Load(this);
-    }
+    private MainWindow? _window;
+    private TrayIcon? _tray;
+    private IGlobalHotkey? _hotkey;
+
+    public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow();
+            // Background app: closing the picker window must not quit the process.
+            desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+            _window = new MainWindow();
+            SetUpTray(desktop);
+            SetUpHotkey();
+
+            // Show once on launch so the app is discoverable.
+            _window.ShowPicker();
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void SetUpTray(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        WindowIcon? icon = null;
+        try
+        {
+            using var stream = AssetLoader.Open(new Uri("avares://Clipwell.Ui/Assets/tray.png"));
+            icon = new WindowIcon(stream);
+        }
+        catch
+        {
+            // No icon asset → tray may not appear, but the hotkey still works.
+        }
+
+        var menu = new NativeMenu();
+        var show = new NativeMenuItem("Show picker");
+        show.Click += (_, _) => _window?.ShowPicker();
+        var quit = new NativeMenuItem("Quit Clipwell");
+        quit.Click += (_, _) => desktop.Shutdown();
+        menu.Add(show);
+        menu.Add(new NativeMenuItemSeparator());
+        menu.Add(quit);
+
+        _tray = new TrayIcon { ToolTipText = "Clipwell", Menu = menu };
+        if (icon is not null) _tray.Icon = icon;
+        _tray.Clicked += (_, _) => _window?.ShowPicker();
+    }
+
+    private void SetUpHotkey()
+    {
+        if (!OperatingSystem.IsWindows()) return; // mac/Linux hotkeys: a later phase
+        _hotkey = new WindowsGlobalHotkey();
+        _hotkey.Pressed += () => Dispatcher.UIThread.Post(() => _window?.ShowPicker());
+        _hotkey.Register();
     }
 }

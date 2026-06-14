@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -9,20 +10,45 @@ namespace Clipwell.Ui;
 public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm = new();
+    private bool _initialized;
+
+    // Hide when focus is lost (normal picker behavior). Disabled for automated
+    // tests via CLIPWELL_NO_AUTOHIDE so a screenshot can be captured.
+    private static readonly bool AutoHide =
+        Environment.GetEnvironmentVariable("CLIPWELL_NO_AUTOHIDE") is null;
 
     public MainWindow()
     {
         InitializeComponent();
         DataContext = _vm;
-        Opened += OnOpened;
         Closed += (_, _) => _vm.Dispose();
-        ItemsList.DoubleTapped += (_, _) => _ = CopySelectedAndCloseAsync();
+        ItemsList.DoubleTapped += (_, _) => _ = CopySelectedAndHideAsync();
+        Deactivated += (_, _) => { if (AutoHide && IsVisible) Hide(); };
     }
 
-    private async void OnOpened(object? sender, EventArgs e)
+    /// <summary>
+    /// Shows the pre-warmed window: resets search, refreshes, focuses, and records
+    /// the show-cycle latency. Called at startup and on the global hotkey.
+    /// </summary>
+    public void ShowPicker()
     {
+        var sw = Stopwatch.StartNew();
+        _vm.SearchText = "";
+        Show();
+        Activate();
         SearchBox.Focus();
-        await _vm.InitializeAsync();
+        sw.Stop();
+        PerfLog.RecordShow(sw.Elapsed.TotalMilliseconds);
+
+        if (!_initialized)
+        {
+            _initialized = true;
+            _ = _vm.InitializeAsync();
+        }
+        else
+        {
+            _ = _vm.RefreshAsync();
+        }
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -30,11 +56,11 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                Close();
+                Hide();
                 e.Handled = true;
                 break;
             case Key.Enter:
-                _ = CopySelectedAndCloseAsync();
+                _ = CopySelectedAndHideAsync();
                 e.Handled = true;
                 break;
             case Key.Down when SearchBox.IsFocused && ItemsList.ItemCount > 0:
@@ -45,11 +71,11 @@ public partial class MainWindow : Window
         base.OnKeyDown(e);
     }
 
-    private async Task CopySelectedAndCloseAsync()
+    private async Task CopySelectedAndHideAsync()
     {
         var text = _vm.Selected?.Item.TextContent;
         if (!string.IsNullOrEmpty(text) && Clipboard is not null)
             await Clipboard.SetTextAsync(text);
-        Close();
+        Hide();
     }
 }
