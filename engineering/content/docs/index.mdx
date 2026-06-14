@@ -1,0 +1,36 @@
+---
+title: How Clipwell is built
+description: The architecture, technology choices, and decisions behind Clipwell.
+---
+
+This is the engineering companion to the [user docs](https://github.com/steven-pribilinskiy/clipwell).
+It explains *how* Clipwell is built and *why* — the architecture, the technology
+choices, and the decisions recorded as ADRs.
+
+## The one-sentence version
+
+Clipwell is a **headless daemon** that owns the clipboard and a SQLite history, and
+exposes it over three protocols (**REST**, **WebSocket/SSE**, **MCP**); every UI —
+including the first‑party picker — is just a client of that public API.
+
+<Cards>
+  <Card title="Architecture" href="/docs/architecture">
+    The daemon, the capture pipeline, and the multi-protocol API surface.
+  </Card>
+  <Card title="Tech stack" href="/docs/tech-stack">
+    .NET 10, Avalonia, SQLite, ASP.NET minimal APIs, the MCP C# SDK.
+  </Card>
+  <Card title="Decision records" href="/docs/adr/0001-daemon-plus-thin-client-on-dotnet">
+    The ADRs — what was decided, and the reasoning at the time.
+  </Card>
+</Cards>
+
+## Principles
+
+- **One source of truth.** History lives in the daemon. Clients never reach around it.
+- **Dogfood the public API.** The picker uses the same REST/WS endpoints third
+  parties do — no privileged backchannel.
+- **Per‑OS behind interfaces.** Clipboard capture, global hotkey, and paste each sit
+  behind an interface with a platform implementation.
+- **Measure the promise.** The picker's show‑cycle latency is logged so the
+  single‑digit‑millisecond claim is backed by real numbers, not vibes.

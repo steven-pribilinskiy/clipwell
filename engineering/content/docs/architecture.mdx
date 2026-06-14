@@ -1,0 +1,63 @@
+---
+title: Architecture
+description: The daemon, the capture pipeline, and the multi-protocol API surface.
+---
+
+Clipwell is split into a **daemon** that owns state and a set of **thin clients**
+that talk to it over a public API. Nothing reaches around the daemon.
+
+## System view
+
+<Mermaid chart={`graph TD
+  subgraph Clients
+    Picker["Avalonia picker"]
+    CLI["clipwell CLI"]
+    MCPc["MCP clients (Claude)"]
+    Ext["editor / scripts"]
+  end
+  subgraph Daemon["Clipwell daemon (.NET 10)"]
+    API["REST + SSE/WS"]
+    MCPs["MCP stdio server"]
+    Store["SQLite history"]
+    Watch["OS clipboard watcher"]
+  end
+  OS["System clipboard"]
+  OS --> Watch --> Store
+  Picker --> API
+  CLI --> API
+  Ext --> API
+  MCPc --> MCPs --> API
+  API --> Store
+`} />
+
+The daemon is the only writer of history. The picker, CLI, MCP server, and any
+third‑party client are all peers on the same REST/WS surface.
+
+## Capture pipeline
+
+Every clipboard change flows through the same path before it reaches subscribers:
+
+<Mermaid chart={`flowchart LR
+  A["clipboard changes"] --> B["OS watcher captures text / html / image"]
+  B --> C["upsert into SQLite (dedup by timestamp + hash)"]
+  C --> D["detector registry assigns a kind"]
+  D --> E["broadcast clipboard.changed"]
+  E --> F["SSE subscribers"]
+  E --> G["WebSocket subscribers"]
+`} />
+
+- **Watcher** is per‑OS behind `IClipboardWatcher` (Windows: a message‑only window +
+  `AddClipboardFormatListener`; macOS/Linux: polling `pbpaste`/`wl-paste`/`xclip`).
+- **Store** is a direct port of the original backend's SQLite schema, so existing
+  history files keep working.
+- **Detectors** (`IClipDetector`) classify items into url/email/color/path/code/
+  image/text and are the plugin seam for richer, personal types.
+- **Broadcast** is an in‑process fan‑out hub shared by SSE and WebSocket.
+
+## Why a daemon, not one app
+
+Keeping capture + storage + API in a long‑lived background process means the picker
+can be a stateless, pre‑warmed window that shows in single‑digit milliseconds, the
+CLI and MCP server need no storage logic of their own, and the same history is
+available to anything on the machine. See [ADR‑0001](/docs/adr/0001-daemon-plus-thin-client-on-dotnet)
+and [ADR‑0003](/docs/adr/0003-multi-protocol-api).

@@ -1,4 +1,4 @@
-export const appName = 'Clipwell';
+export const appName = 'Clipwell Engineering';
 export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';

@@ -1,0 +1,35 @@
+---
+title: Tech stack
+description: What Clipwell is built with, and why.
+---
+
+| Layer | Choice | Why |
+|-------|--------|-----|
+| Language | **C# / .NET 10** | One language across daemon, UI, and the plugin contract; the original WPF app's logic ports cleanly. |
+| UI | **Avalonia 12** | The only cross‑platform .NET UI that hits the single‑digit‑ms render bar on all three OSs (Skia‑direct, no webview latency). See [ADR‑0002](/docs/adr/0002-avalonia-for-the-ui). |
+| API host | **ASP.NET minimal APIs (Kestrel)** | REST + WebSocket in‑process; OpenAPI built in. |
+| Storage | **SQLite (`Microsoft.Data.Sqlite`)** | Embedded, zero‑config, schema ported from the original backend. |
+| AI protocol | **ModelContextProtocol C# SDK** | Stdio MCP server so Claude Desktop / Code can read and act on history. |
+| Docs | **Fumadocs (Next.js, static export)** | This site and the user docs; static output for GitHub Pages, `llms.txt` for agents. |
+| Diagrams | **Mermaid** | Architecture diagrams authored in‑repo as text, rendered client‑side. |
+
+## What was deliberately *not* used
+
+- **Electron / Tauri for the UI** — webview composition adds latency that breaks the
+  perf promise (Tauri's Linux WebKitGTK especially). Avalonia renders natively.
+- **A separate database server** — SQLite is enough for a per‑machine history.
+- **A web framework for capture** — the daemon talks to the OS directly; the web
+  layer is only the API surface.
+
+## Repository layout
+
+```
+daemon/        clipboard watcher + SQLite + REST/WS(SSE) + OpenAPI
+protocol/      shared domain model + plugin contracts
+mcp/           stdio MCP server (proxies to the daemon)
+cli/           reference API client
+ui/            Avalonia picker
+docs/          user documentation site (Fumadocs)
+engineering/   this site (Fumadocs)
+openapi/       checked-in OpenAPI spec
+```

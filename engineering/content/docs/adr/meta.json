@@ -1,0 +1,4 @@
+{
+  "title": "Decision Records",
+  "pages": ["0001-daemon-plus-thin-client-on-dotnet", "0002-avalonia-for-the-ui", "0003-multi-protocol-api", "0004-prewarmed-picker"]
+}
