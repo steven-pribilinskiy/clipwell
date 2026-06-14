@@ -132,6 +132,102 @@
           }
         }
       }
+    },
+    "/api/clipboard/pin": {
+      "post": {
+        "tags": [
+          "Clipwell.Daemon"
+        ],
+        "summary": "Pin or unpin an item (kept across retention).",
+        "operationId": "PinItem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PinRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/clipboard/sensitive": {
+      "post": {
+        "tags": [
+          "Clipwell.Daemon"
+        ],
+        "summary": "Mark or unmark an item as sensitive (masked in the UI).",
+        "operationId": "MarkSensitive",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SensitiveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/clipboard/rename": {
+      "post": {
+        "tags": [
+          "Clipwell.Daemon"
+        ],
+        "summary": "Set or clear a custom alias for an item.",
+        "operationId": "RenameItem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/clipboard/image/{timestamp}": {
+      "get": {
+        "tags": [
+          "Clipwell.Daemon"
+        ],
+        "summary": "Fetch the cached PNG for an image item, by timestamp.",
+        "operationId": "GetImage",
+        "parameters": [
+          {
+            "name": "timestamp",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -158,6 +254,54 @@
         "properties": {
           "timestamp": {
             "type": "string"
+          }
+        }
+      },
+      "PinRequest": {
+        "required": [
+          "timestamp",
+          "pinned"
+        ],
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "pinned": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RenameRequest": {
+        "required": [
+          "timestamp",
+          "alias"
+        ],
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "alias": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SensitiveRequest": {
+        "required": [
+          "timestamp",
+          "sensitive"
+        ],
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "sensitive": {
+            "type": "boolean"
           }
         }
       }
