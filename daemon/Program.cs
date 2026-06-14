@@ -61,10 +61,12 @@ watcher.Start();
 
 // Hourly retention sweep. The delay comes first so a short-lived run (e.g. a dev
 // session killed within minutes) never triggers a destructive purge — only a
-// daemon that stays up for an hour actually sweeps.
+// daemon that stays up for an hour actually sweeps. Set CLIPWELL_NO_SWEEP to
+// disable purging entirely (useful when pointed at a shared/real DB).
+var sweepDisabled = Environment.GetEnvironmentVariable("CLIPWELL_NO_SWEEP") is not null;
 _ = Task.Run(async () =>
 {
-    while (true)
+    while (!sweepDisabled)
     {
         await Task.Delay(TimeSpan.FromHours(1));
         try

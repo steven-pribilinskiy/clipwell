@@ -24,6 +24,17 @@ public sealed class ClipRow(ClipItem item)
         }
     }
 
+    public string KindGlyph => Item.Kind switch
+    {
+        "url" => "🔗",
+        "email" => "✉",
+        "color" => "🎨",
+        "path" => "📁",
+        "code" => "{ }",
+        "image" => "🖼",
+        _ => "📄",
+    };
+
     public string Meta
     {
         get

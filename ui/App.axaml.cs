@@ -14,6 +14,7 @@ public partial class App : Application
     private MainWindow? _window;
     private TrayIcon? _tray;
     private IGlobalHotkey? _hotkey;
+    private IPasteService? _paste;
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -24,7 +25,8 @@ public partial class App : Application
             // Background app: closing the picker window must not quit the process.
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-            _window = new MainWindow();
+            if (OperatingSystem.IsWindows()) _paste = new WindowsPasteService();
+            _window = new MainWindow(_paste);
             SetUpTray(desktop);
             SetUpHotkey();
 
@@ -66,7 +68,12 @@ public partial class App : Application
     {
         if (!OperatingSystem.IsWindows()) return; // mac/Linux hotkeys: a later phase
         _hotkey = new WindowsGlobalHotkey();
-        _hotkey.Pressed += () => Dispatcher.UIThread.Post(() => _window?.ShowPicker());
+        _hotkey.Pressed += () =>
+        {
+            // Capture the source window NOW, before the picker steals focus.
+            var target = _paste?.GetForegroundWindow() ?? 0;
+            Dispatcher.UIThread.Post(() => _window?.ShowPicker(target));
+        };
         _hotkey.Register();
     }
 }

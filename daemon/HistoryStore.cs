@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Clipwell.Daemon.Detectors;
 using Clipwell.Protocol;
 using Microsoft.Data.Sqlite;
 
@@ -17,6 +18,7 @@ public sealed class HistoryStore : IDisposable
     private readonly string _settingsPath;
     private readonly SqliteConnection _conn;
     private readonly Lock _gate = new();
+    private readonly DetectorRegistry _detectors = new();
 
     public HistoryStore()
     {
@@ -122,7 +124,8 @@ public sealed class HistoryStore : IDisposable
             var index = 0;
             while (reader.Read())
             {
-                items.Add(RowToItem(reader, index));
+                var item = RowToItem(reader, index);
+                items.Add(item with { Kind = _detectors.Classify(item) });
                 index++;
             }
             return items;
