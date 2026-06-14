@@ -33,8 +33,10 @@ hundreds of milliseconds (measured ~170ms cold here).
 
 ## Consequences
 
-- Measured: cold first show ~170ms (one-time window realization), warm shows
-  **~6ms and below** — within the single-digit-ms bar.
+- Measured (via `bench/run-bench.ps1`): cold first show ~170ms (one-time window
+  realization); a warm **hidden→shown** cycle is **~16ms** (≈ one 60Hz frame). The
+  synchronous render is ~1ms — the remainder is the OS show/activate/focus. This is
+  on par with the original WPF app and well below the threshold of perceptible lag.
 - Hide-on-blur is the default; an env flag (`CLIPWELL_NO_AUTOHIDE`) disables it for
   automated screenshot tests.
 - Still to do: paste-into-the-previously-focused-app after selection, open-at-cursor

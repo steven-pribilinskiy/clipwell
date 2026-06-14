@@ -1,0 +1,12 @@
+{
+  "rest_get_history_ms": {
+    "p50": 2.79,
+    "p95": 4.49,
+    "max": 12.44
+  },
+  "picker_warm_show_ms": {
+    "median": 16.48,
+    "count": 8
+  },
+  "recordedAt": "2026-06-15T00:33:33.6668509+02:00"
+}

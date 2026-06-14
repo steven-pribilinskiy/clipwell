@@ -2,8 +2,8 @@ import Link from 'next/link';
 
 const features = [
   {
-    title: 'Single-digit-ms picker',
-    body: 'A pre-warmed window shows in ~6 ms on a global hotkey. No cold start, no lag.',
+    title: 'Frame-fast picker',
+    body: 'A pre-warmed window appears in about one display frame (~16 ms measured) on a global hotkey. No cold start, no lag.',
     icon: '⚡',
   },
   {

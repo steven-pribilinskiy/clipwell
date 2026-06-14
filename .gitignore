@@ -23,3 +23,6 @@ Thumbs.db
 *.db-wal
 *.db-shm
 *.log
+
+# Bench: keep baseline.json, ignore per-run output
+bench/last-run.json
