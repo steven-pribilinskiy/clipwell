@@ -53,15 +53,30 @@ public partial class App : Application
         var menu = new NativeMenu();
         var show = new NativeMenuItem("Show picker");
         show.Click += (_, _) => _window?.ShowPicker();
+        var settings = new NativeMenuItem("Settings…");
+        settings.Click += (_, _) => ShowSettings();
         var quit = new NativeMenuItem("Quit Clipwell");
         quit.Click += (_, _) => desktop.Shutdown();
         menu.Add(show);
+        menu.Add(settings);
         menu.Add(new NativeMenuItemSeparator());
         menu.Add(quit);
 
         _tray = new TrayIcon { ToolTipText = "Clipwell", Menu = menu };
         if (icon is not null) _tray.Icon = icon;
         _tray.Clicked += (_, _) => _window?.ShowPicker();
+    }
+
+    private SettingsWindow? _settingsWindow;
+
+    private void ShowSettings()
+    {
+        if (_settingsWindow is null || !_settingsWindow.IsVisible)
+        {
+            _settingsWindow = new SettingsWindow();
+            _settingsWindow.Show();
+        }
+        _settingsWindow.Activate();
     }
 
     private void SetUpHotkey()

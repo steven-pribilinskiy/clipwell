@@ -1,20 +1,79 @@
 using System;
+using System.ComponentModel;
 using System.Globalization;
+using System.IO;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Clipwell.Protocol;
 
 namespace Clipwell.Ui;
 
 /// <summary>
 /// View-side wrapper around a <see cref="ClipItem"/> that exposes display-ready
-/// strings, keeping the XAML free of converters.
+/// strings (and, for image items, an async-loaded thumbnail).
 /// </summary>
-public sealed class ClipRow(ClipItem item)
+public sealed class ClipRow : INotifyPropertyChanged
 {
-    public ClipItem Item { get; } = item;
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    public ClipItem Item { get; }
+
+    public ClipRow(ClipItem item, ClipwellClient? client = null)
+    {
+        Item = item;
+        if (item.HasImage && !item.IsSensitive && client is not null)
+            _ = LoadThumbnailAsync(client);
+    }
+
+    private Bitmap? _thumbnail;
+    public Bitmap? Thumbnail
+    {
+        get => _thumbnail;
+        private set
+        {
+            _thumbnail = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Thumbnail)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasThumbnail)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowGlyph)));
+        }
+    }
+
+    public bool HasThumbnail => _thumbnail is not null;
+
+    /// <summary>Show the kind glyph only when there's no thumbnail to show instead.</summary>
+    public bool ShowGlyph => _thumbnail is null;
+
+    private async System.Threading.Tasks.Task LoadThumbnailAsync(ClipwellClient client)
+    {
+        var bytes = await client.GetImageBytesAsync(Item.Timestamp);
+        if (bytes is null) return;
+        try
+        {
+            using var ms = new MemoryStream(bytes);
+            // Decode to a small thumbnail width to keep memory and layout cheap.
+            var bmp = Bitmap.DecodeToWidth(ms, 48);
+            await Dispatcher.UIThread.InvokeAsync(() => Thumbnail = bmp);
+        }
+        catch
+        {
+            // ignore undecodable images
+        }
+    }
 
     public bool IsPinned => Item.IsUserPinned;
     public bool IsSensitive => Item.IsSensitive;
     public string PinGlyph => Item.IsUserPinned ? "📌" : "";
+
+    public string KindGlyph => Item.Kind switch
+    {
+        "url" => "🔗",
+        "email" => "✉",
+        "color" => "🎨",
+        "path" => "📁",
+        "code" => "{ }",
+        "image" => "🖼",
+        _ => "📄",
+    };
 
     public string Preview
     {
@@ -29,17 +88,6 @@ public sealed class ClipRow(ClipItem item)
             return oneLine.Length > 200 ? oneLine[..200] + "…" : oneLine;
         }
     }
-
-    public string KindGlyph => Item.Kind switch
-    {
-        "url" => "🔗",
-        "email" => "✉",
-        "color" => "🎨",
-        "path" => "📁",
-        "code" => "{ }",
-        "image" => "🖼",
-        _ => "📄",
-    };
 
     public string Meta
     {

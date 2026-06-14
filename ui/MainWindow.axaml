@@ -40,9 +40,12 @@
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="vm:ClipRow">
                         <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2">
-                            <TextBlock Grid.Column="0" Text="{Binding KindGlyph}"
-                                       FontSize="15" Margin="0,0,10,0"
-                                       VerticalAlignment="Top" Opacity="0.85" />
+                            <Panel Grid.Column="0" Width="24" Margin="0,0,10,0" VerticalAlignment="Top">
+                                <TextBlock Text="{Binding KindGlyph}" FontSize="15"
+                                           IsVisible="{Binding ShowGlyph}" Opacity="0.85" />
+                                <Image Source="{Binding Thumbnail}" Width="24" Height="24"
+                                       IsVisible="{Binding HasThumbnail}" Stretch="UniformToFill" />
+                            </Panel>
                             <StackPanel Grid.Column="1" Spacing="2">
                                 <TextBlock Text="{Binding Preview}"
                                            TextTrimming="CharacterEllipsis"

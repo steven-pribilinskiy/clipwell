@@ -36,6 +36,17 @@ public sealed class ClipwellClient
         return page?.Items ?? [];
     }
 
+    private sealed record SettingsDto(int? RetentionDays);
+
+    public async Task<int?> GetRetentionAsync()
+    {
+        try { return (await _http.GetFromJsonAsync<SettingsDto>("/api/clipboard/settings"))?.RetentionDays; }
+        catch { return 30; }
+    }
+
+    public async Task SetRetentionAsync(int? days) =>
+        await _http.PostAsJsonAsync("/api/clipboard/settings", new { retentionDays = days });
+
     public async Task DeleteAsync(string timestamp) =>
         await _http.PostAsJsonAsync("/api/clipboard/delete", new { timestamp });
 
@@ -48,6 +59,20 @@ public sealed class ClipwellClient
     /// <summary>Absolute URL to an item's cached image (for thumbnails).</summary>
     public string ImageUrl(string timestamp) =>
         new Uri(_baseUri, $"/api/clipboard/image/{Uri.EscapeDataString(timestamp)}").ToString();
+
+    /// <summary>Fetch an item's cached image bytes, or null if none.</summary>
+    public async Task<byte[]?> GetImageBytesAsync(string timestamp)
+    {
+        try
+        {
+            var res = await _http.GetAsync($"/api/clipboard/image/{Uri.EscapeDataString(timestamp)}");
+            return res.IsSuccessStatusCode ? await res.Content.ReadAsByteArrayAsync() : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     /// <summary>
     /// Connects to the daemon's WebSocket and invokes <paramref name="onChange"/>

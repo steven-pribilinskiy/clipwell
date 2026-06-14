@@ -1,0 +1,43 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Clipwell.Ui.SettingsWindow"
+        Title="Clipwell Settings"
+        Width="420" Height="320"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False">
+    <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" Padding="24">
+        <StackPanel Spacing="18">
+            <TextBlock Text="Settings" FontSize="20" FontWeight="SemiBold" />
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="History retention" FontWeight="Medium" />
+                <TextBlock Text="How long to keep clipboard history before it's swept."
+                           FontSize="12" Opacity="0.6" />
+                <ComboBox Name="RetentionBox" HorizontalAlignment="Stretch" SelectedIndex="1">
+                    <ComboBoxItem>7 days</ComboBoxItem>
+                    <ComboBoxItem>30 days</ComboBoxItem>
+                    <ComboBoxItem>90 days</ComboBoxItem>
+                    <ComboBoxItem>Forever</ComboBoxItem>
+                </ComboBox>
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="Global hotkey" FontWeight="Medium" />
+                <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                        CornerRadius="6" Padding="10,6" HorizontalAlignment="Left">
+                    <TextBlock Text="Alt + Shift + V" FontFamily="Cascadia Code,Consolas,monospace" />
+                </Border>
+                <TextBlock Text="Press to summon the picker. (Rebinding is coming soon.)"
+                           FontSize="12" Opacity="0.6" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+                <Button Name="CloseButton" Content="Close" Padding="16,6" />
+                <Button Name="SaveButton" Content="Save" Padding="16,6"
+                        Background="{DynamicResource SystemAccentColor}" />
+            </StackPanel>
+
+            <TextBlock Name="StatusText" FontSize="12" Opacity="0.7" />
+        </StackPanel>
+    </Border>
+</Window>

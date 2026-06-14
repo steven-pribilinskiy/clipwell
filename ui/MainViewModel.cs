@@ -121,7 +121,7 @@ public sealed partial class MainViewModel : ObservableObject
         var ordered = filtered.OrderByDescending(i => i.IsUserPinned);
 
         Items.Clear();
-        foreach (var item in ordered) Items.Add(new ClipRow(item));
+        foreach (var item in ordered) Items.Add(new ClipRow(item, _client));
         Selected = Items.FirstOrDefault();
     }
 
