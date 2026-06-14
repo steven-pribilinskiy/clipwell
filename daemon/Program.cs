@@ -18,6 +18,7 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 
 builder.Services.AddOpenApi("v1");
 
+builder.Services.AddSingleton<MetadataStore>();
 builder.Services.AddSingleton<HistoryStore>();
 builder.Services.AddSingleton<ClipboardHub>();
 builder.Services.AddSingleton<IClipboardWatcher>(sp =>
@@ -28,6 +29,7 @@ app.UseWebSockets();
 app.MapOpenApi("/openapi/v1.json"); // machine-readable API spec (feeds the docs site)
 
 var store = app.Services.GetRequiredService<HistoryStore>();
+var meta = app.Services.GetRequiredService<MetadataStore>();
 var hub = app.Services.GetRequiredService<ClipboardHub>();
 var watcher = app.Services.GetRequiredService<IClipboardWatcher>();
 
@@ -113,6 +115,30 @@ app.MapPost("/api/clipboard/delete", (DeleteRequest req) =>
 app.MapPost("/api/clipboard/clear", () => Results.Ok(new { deleted = store.ClearAll() }))
     .WithName("ClearHistory").WithSummary("Delete all history.");
 
+app.MapPost("/api/clipboard/pin", (PinRequest req) =>
+{
+    if (string.IsNullOrEmpty(req.Timestamp)) return Results.BadRequest(new { error = "timestamp required" });
+    meta.SetPinned(req.Timestamp, req.Pinned);
+    return Results.Ok(new { req.Timestamp, req.Pinned });
+})
+    .WithName("PinItem").WithSummary("Pin or unpin an item (kept across retention).");
+
+app.MapPost("/api/clipboard/sensitive", (SensitiveRequest req) =>
+{
+    if (string.IsNullOrEmpty(req.Timestamp)) return Results.BadRequest(new { error = "timestamp required" });
+    meta.SetSensitive(req.Timestamp, req.Sensitive);
+    return Results.Ok(new { req.Timestamp, req.Sensitive });
+})
+    .WithName("MarkSensitive").WithSummary("Mark or unmark an item as sensitive (masked in the UI).");
+
+app.MapPost("/api/clipboard/rename", (RenameRequest req) =>
+{
+    if (string.IsNullOrEmpty(req.Timestamp)) return Results.BadRequest(new { error = "timestamp required" });
+    meta.SetAlias(req.Timestamp, req.Alias);
+    return Results.Ok(new { req.Timestamp, req.Alias });
+})
+    .WithName("RenameItem").WithSummary("Set or clear a custom alias for an item.");
+
 app.MapGet("/api/clipboard/image/{timestamp}", (string timestamp) =>
 {
     var path = store.GetImagePath(timestamp);
@@ -180,3 +206,6 @@ app.MapGet("/api/clipboard/ws", async (HttpContext ctx) =>
 app.Run();
 
 internal sealed record DeleteRequest(string Timestamp);
+internal sealed record PinRequest(string Timestamp, bool Pinned);
+internal sealed record SensitiveRequest(string Timestamp, bool Sensitive);
+internal sealed record RenameRequest(string Timestamp, string? Alias);

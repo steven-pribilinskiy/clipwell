@@ -74,6 +74,30 @@ public partial class MainWindow : Window
                 ItemsList.Focus();
                 e.Handled = true;
                 break;
+            case Key.Delete:
+                _vm.DeleteSelectedCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.P when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                _vm.TogglePinCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.E when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                _vm.ToggleSensitiveCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.D1 when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                _vm.SetFilterCommand.Execute("All");
+                e.Handled = true;
+                break;
+            case Key.D2 when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                _vm.SetFilterCommand.Execute("Pinned");
+                e.Handled = true;
+                break;
+            case Key.D3 when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                _vm.SetFilterCommand.Execute("Sensitive");
+                e.Handled = true;
+                break;
         }
         base.OnKeyDown(e);
     }

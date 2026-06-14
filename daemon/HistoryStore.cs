@@ -19,9 +19,11 @@ public sealed class HistoryStore : IDisposable
     private readonly SqliteConnection _conn;
     private readonly Lock _gate = new();
     private readonly DetectorRegistry _detectors = new();
+    private readonly MetadataStore _meta;
 
-    public HistoryStore()
+    public HistoryStore(MetadataStore meta)
     {
+        _meta = meta;
         // Default: %APPDATA%\Roaming\Clipwell on Windows; ~/.config/Clipwell on
         // Linux; ~/Library/Application Support/Clipwell on macOS. Overridable via
         // CLIPWELL_DATA_DIR so dev/test runs use an isolated DB instead of the
@@ -125,7 +127,14 @@ public sealed class HistoryStore : IDisposable
             while (reader.Read())
             {
                 var item = RowToItem(reader, index);
-                items.Add(item with { Kind = _detectors.Classify(item) });
+                item = item with
+                {
+                    Kind = _detectors.Classify(item),
+                    IsUserPinned = _meta.IsPinned(item.Timestamp),
+                    IsSensitive = _meta.IsSensitive(item.Timestamp),
+                    Alias = _meta.Alias(item.Timestamp),
+                };
+                items.Add(item);
                 index++;
             }
             return items;
@@ -177,7 +186,9 @@ public sealed class HistoryStore : IDisposable
             using var cmd = _conn.CreateCommand();
             cmd.CommandText = "DELETE FROM items WHERE timestamp = $ts";
             cmd.Parameters.AddWithValue("$ts", timestamp);
-            return cmd.ExecuteNonQuery() > 0;
+            var deleted = cmd.ExecuteNonQuery() > 0;
+            if (deleted) _meta.Forget(timestamp);
+            return deleted;
         }
     }
 

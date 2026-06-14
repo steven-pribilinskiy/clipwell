@@ -39,6 +39,16 @@ public sealed class ClipwellClient
     public async Task DeleteAsync(string timestamp) =>
         await _http.PostAsJsonAsync("/api/clipboard/delete", new { timestamp });
 
+    public async Task PinAsync(string timestamp, bool pinned) =>
+        await _http.PostAsJsonAsync("/api/clipboard/pin", new { timestamp, pinned });
+
+    public async Task SensitiveAsync(string timestamp, bool sensitive) =>
+        await _http.PostAsJsonAsync("/api/clipboard/sensitive", new { timestamp, sensitive });
+
+    /// <summary>Absolute URL to an item's cached image (for thumbnails).</summary>
+    public string ImageUrl(string timestamp) =>
+        new Uri(_baseUri, $"/api/clipboard/image/{Uri.EscapeDataString(timestamp)}").ToString();
+
     /// <summary>
     /// Connects to the daemon's WebSocket and invokes <paramref name="onChange"/>
     /// each time the clipboard changes, until the token is cancelled. Reconnects

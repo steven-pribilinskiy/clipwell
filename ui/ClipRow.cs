@@ -12,10 +12,16 @@ public sealed class ClipRow(ClipItem item)
 {
     public ClipItem Item { get; } = item;
 
+    public bool IsPinned => Item.IsUserPinned;
+    public bool IsSensitive => Item.IsSensitive;
+    public string PinGlyph => Item.IsUserPinned ? "📌" : "";
+
     public string Preview
     {
         get
         {
+            if (Item.IsSensitive) return "•••••••••••  (sensitive)";
+            if (!string.IsNullOrEmpty(Item.Alias)) return Item.Alias!;
             var text = Item.TextContent;
             if (string.IsNullOrEmpty(text))
                 return Item.HasImage ? "🖼  image" : "(empty)";
