@@ -1,0 +1,40 @@
+---
+title: Everyday scenarios
+description: How to use the Clipwell picker day to day.
+---
+
+The picker is a pre‑warmed window that appears the instant you press the hotkey.
+
+## Find and paste something you copied earlier
+
+1. Press **Alt+Shift+V**. The picker appears centered, search box focused.
+2. Start typing to filter by content.
+3. Press **Enter** (or double‑click) to copy the item — Clipwell restores focus to
+   the app you were in and pastes it there.
+4. Press **Escape** (or click away) to dismiss without pasting.
+
+> Clipwell remembers which window was focused when you opened the picker, so the
+> paste lands back in the right place.
+
+## Recognize items at a glance
+
+Every item is classified and shown with a glyph:
+
+| Glyph | Kind  | Example |
+|-------|-------|---------|
+| 🔗    | url   | `https://avaloniaui.net` |
+| ✉     | email | `you@example.com` |
+| 🎨    | color | `#3366ff` |
+| 📁    | path  | `C:\Users\you\file.txt` |
+| `{ }` | code  | `function add(a, b) { return a + b; }` |
+| 🖼     | image | a screenshot |
+| 📄    | text  | anything else |
+
+Classification is done by pluggable detectors, so the set of kinds can be extended.
+
+## Keep it running in the background
+
+Clipwell lives in the system tray. Closing the picker window doesn't quit it — use
+the tray menu's **Quit** for that. Only one instance runs at a time.
+
+{/* TODO: add screenshots/short WebM clips per scenario once captured */}

@@ -1,0 +1,46 @@
+---
+title: Install
+description: Build and run Clipwell on Windows, macOS, and Linux.
+---
+
+Clipwell needs the [.NET 10 SDK](https://dotnet.microsoft.com/download). The daemon
+runs everywhere; the picker UI is [Avalonia](https://avaloniaui.net) (also
+cross‑platform).
+
+## Build
+
+```sh
+git clone https://github.com/steven-pribilinskiy/clipwell
+cd clipwell
+dotnet build
+```
+
+## Run
+
+```sh
+dotnet run --project daemon   # http://127.0.0.1:8787 (override with CLIPWELL_URL)
+dotnet run --project ui       # the picker
+```
+
+## Platform notes
+
+### Windows
+Full support: native clipboard watcher (text, HTML, images), global hotkey
+(**Alt+Shift+V** — Win+V is reserved by the OS), tray icon, and paste‑into‑the‑
+source‑app.
+
+### macOS / Linux
+The daemon watches the clipboard by polling the platform CLI, so install one:
+
+- **macOS** — `pbpaste` ships with the OS.
+- **Linux (Wayland)** — `wl-clipboard` (`wl-paste`).
+- **Linux (X11)** — `xclip`.
+
+The global hotkey and tray on macOS/Linux are on the roadmap; the daemon, REST/WS,
+MCP, and CLI work today.
+
+## Data location
+
+History lives in a SQLite database under your OS app‑data folder
+(`%APPDATA%\Roaming\Clipwell` on Windows, `~/.config/Clipwell` on Linux,
+`~/Library/Application Support/Clipwell` on macOS). Override with `CLIPWELL_DATA_DIR`.

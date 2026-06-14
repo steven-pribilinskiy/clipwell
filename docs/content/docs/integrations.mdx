@@ -1,0 +1,62 @@
+---
+title: Integrations & API
+description: Drive Clipwell from REST, WebSocket/SSE, MCP, or the CLI.
+---
+
+The daemon exposes the same history three ways. Default base URL is
+`http://127.0.0.1:8787` (override with `CLIPWELL_URL`; clients read `CLIPWELL_API`).
+
+## REST
+
+```sh
+# recent history (newest first)
+curl http://127.0.0.1:8787/api/clipboard?limit=20
+
+# page back in time
+curl "http://127.0.0.1:8787/api/clipboard?limit=20&before=2026-06-14T00:00:00Z"
+
+# settings, delete, clear
+curl http://127.0.0.1:8787/api/clipboard/settings
+curl -X POST http://127.0.0.1:8787/api/clipboard/delete -d '{"timestamp":"..."}'
+curl -X POST http://127.0.0.1:8787/api/clipboard/clear
+```
+
+The full machine‑readable contract is published at `GET /openapi/v1.json` and
+checked into the repo at `openapi/clipwell.v1.json`.
+
+## Live updates (SSE / WebSocket)
+
+Both emit a `clipboard.changed` event on every capture.
+
+```js
+// Server-Sent Events
+new EventSource("http://127.0.0.1:8787/api/clipboard/stream")
+  .onmessage = (e) => console.log("changed:", JSON.parse(e.data));
+
+// WebSocket
+new WebSocket("ws://127.0.0.1:8787/api/clipboard/ws")
+  .onmessage = (e) => console.log("changed:", JSON.parse(e.data));
+```
+
+## MCP (AI agents)
+
+The `mcp/` project is a stdio MCP server exposing clipboard tools to clients like
+Claude Desktop / Claude Code: `clipboard_recent`, `clipboard_search`,
+`clipboard_get_text`, and `clipboard_clear`. Point the client at the built
+`Clipwell.Mcp` executable; it proxies to the running daemon.
+
+```json
+{
+  "mcpServers": {
+    "clipwell": { "command": "/path/to/Clipwell.Mcp" }
+  }
+}
+```
+
+## CLI
+
+```sh
+clipwell list 20    # recent items
+clipwell watch      # live-stream changes
+clipwell clear      # wipe history
+```

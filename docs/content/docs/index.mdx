@@ -1,0 +1,40 @@
+---
+title: Clipwell
+description: A fast, cross-platform clipboard history any app can query, listen to, and drive.
+---
+
+Clipwell is a clipboard‑history manager built as a **headless daemon** with a thin
+picker on top. The daemon watches your clipboard, stores typed history in SQLite,
+and exposes everything over a public API — **REST**, **WebSocket/SSE**, and **MCP** —
+so the picker, the CLI, editor extensions, and AI agents are all just clients of the
+same contract.
+
+## Why Clipwell
+
+<Cards>
+  <Card title="Fast" href="/docs/scenarios">
+    The picker is pre‑warmed and appears in single‑digit milliseconds on a global hotkey.
+  </Card>
+  <Card title="Queryable by anything" href="/docs/integrations">
+    REST for one‑shot calls, WebSocket/SSE to stream changes, MCP so AI agents can read and act.
+  </Card>
+  <Card title="Cross‑platform" href="/docs/install">
+    Windows, macOS, and Linux behind one clipboard‑watcher interface.
+  </Card>
+  <Card title="Typed & extensible" href="/docs/scenarios">
+    Items are classified (url, email, color, path, code, image); detectors load as plugins.
+  </Card>
+</Cards>
+
+## Quickstart
+
+```sh
+git clone https://github.com/steven-pribilinskiy/clipwell
+cd clipwell
+dotnet build
+dotnet run --project daemon   # clipboard daemon on http://127.0.0.1:8787
+dotnet run --project ui       # the picker — press Alt+Shift+V to summon it
+```
+
+Then copy a few things and press **Alt+Shift+V**. See [Install](/docs/install) for
+per‑OS notes and [Scenarios](/docs/scenarios) for everyday workflows.
