@@ -4,8 +4,13 @@ import { ThemedShot } from '@/components/themed-shot';
 const features = [
   {
     title: 'Frame-fast picker',
-    body: 'A pre-warmed window appears in about one display frame (~13–16 ms measured) on a global hotkey. No cold start, no lag.',
+    body: 'A pre-warmed window appears in about one display frame (~14 ms measured) on a global hotkey. No cold start, no lag.',
     icon: '⚡',
+  },
+  {
+    title: 'A rich picker',
+    body: 'Compact & Detail views, hover + Quick Look (Ctrl+Y), filters, grouping by date/source, rename, and a Ctrl+K action palette.',
+    icon: '🪟',
   },
   {
     title: 'Queryable by anything',
@@ -18,9 +23,14 @@ const features = [
     icon: '🖥️',
   },
   {
-    title: 'Typed & extensible',
-    body: 'Items are classified — url, email, color, path, code, image — by detectors that load as plugins.',
+    title: 'Typed, with favicons & source',
+    body: 'Items are classified — url, github-pr, jira, email, color, path, code, image — with site favicons, thumbnails, and the source app.',
     icon: '🏷️',
+  },
+  {
+    title: 'Extensible via plugins',
+    body: 'Detectors and Ctrl+K actions load from external assemblies through a small public contract. Personal features stay in a private plugin.',
+    icon: '🧩',
   },
 ];
 

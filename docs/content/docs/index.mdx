@@ -13,7 +13,11 @@ same contract.
 
 <Cards>
   <Card title="Fast" href="/docs/scenarios">
-    The picker is pre‑warmed and appears in single‑digit milliseconds on a global hotkey.
+    The picker is pre‑warmed and appears in ~one frame (≈14 ms measured) on a global hotkey.
+  </Card>
+  <Card title="A rich picker" href="/docs/scenarios">
+    Compact & Detail views, hover + Quick Look, type/pin/sensitive filters, grouping by
+    date or source, rename, and a Ctrl+K action palette.
   </Card>
   <Card title="Queryable by anything" href="/docs/integrations">
     REST for one‑shot calls, WebSocket/SSE to stream changes, MCP so AI agents can read and act.
@@ -21,8 +25,12 @@ same contract.
   <Card title="Cross‑platform" href="/docs/install">
     Windows, macOS, and Linux behind one clipboard‑watcher interface.
   </Card>
-  <Card title="Typed & extensible" href="/docs/scenarios">
-    Items are classified (url, email, color, path, code, image); detectors load as plugins.
+  <Card title="Typed items, favicons, source" href="/docs/scenarios">
+    Classified (url, github‑pr, jira, email, color, path, code, image), with site favicons,
+    image thumbnails, and the app each item was copied from.
+  </Card>
+  <Card title="Extensible" href="/docs/integrations">
+    Detectors and Ctrl+K actions load as plugins through a small public contract.
   </Card>
 </Cards>
 
