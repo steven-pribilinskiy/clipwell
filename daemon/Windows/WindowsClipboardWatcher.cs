@@ -119,6 +119,7 @@ public sealed class WindowsClipboardWatcher : IClipboardWatcher
     private void CaptureCurrent()
     {
         var text = ReadUnicodeText();
+        if (string.IsNullOrEmpty(text)) text = null; // an empty CF_UNICODETEXT is not a real item
         var html = ReadHtml();
         var now = DateTimeOffset.UtcNow;
         var imagePath = ReadAndSaveImage(now.ToUnixTimeMilliseconds());

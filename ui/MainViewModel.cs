@@ -92,7 +92,6 @@ public sealed partial class MainViewModel : ObservableObject
         {
             _all = [.. await _client.GetPageAsync(200)];
             ApplyFilter();
-            Status = _all.Count == 0 ? "No clipboard history yet" : $"{Items.Count} of {_all.Count} items";
         }
         catch
         {
@@ -123,6 +122,11 @@ public sealed partial class MainViewModel : ObservableObject
         Items.Clear();
         foreach (var item in ordered) Items.Add(new ClipRow(item, _client));
         Selected = Items.FirstOrDefault();
+
+        // Reflect the filtered view, not just the last reload (search filters live).
+        Status = _all.Count == 0
+            ? "No clipboard history yet"
+            : $"{Items.Count} of {_all.Count} items";
     }
 
     public void Dispose() => _cts.Cancel();

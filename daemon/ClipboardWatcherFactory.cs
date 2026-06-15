@@ -12,6 +12,11 @@ public static class ClipboardWatcherFactory
 {
     public static IClipboardWatcher Create(string cacheDir)
     {
+        // CLIPWELL_NO_WATCH=1 serves existing history without capturing new copies.
+        // Used by the docs-capture scripts so the user's live clipboard activity
+        // can't leak into screenshots/clips after the DB has been seeded.
+        if (Environment.GetEnvironmentVariable("CLIPWELL_NO_WATCH") == "1")
+            return new NullClipboardWatcher();
         if (OperatingSystem.IsWindows())
             return new WindowsClipboardWatcher(cacheDir);
         if (OperatingSystem.IsMacOS())

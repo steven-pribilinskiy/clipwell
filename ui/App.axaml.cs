@@ -25,6 +25,14 @@ public partial class App : Application
             // Background app: closing the picker window must not quit the process.
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
+            // Screenshot hook: force a theme variant (otherwise we follow the OS).
+            RequestedThemeVariant = Environment.GetEnvironmentVariable("CLIPWELL_THEME")?.ToLowerInvariant() switch
+            {
+                "light" => Avalonia.Styling.ThemeVariant.Light,
+                "dark" => Avalonia.Styling.ThemeVariant.Dark,
+                _ => Avalonia.Styling.ThemeVariant.Default,
+            };
+
             if (OperatingSystem.IsWindows()) _paste = new WindowsPasteService();
             _window = new MainWindow(_paste);
             SetUpTray(desktop);
@@ -32,6 +40,11 @@ public partial class App : Application
 
             // Show once on launch so the app is discoverable.
             _window.ShowPicker();
+
+            // Screenshot-test hook: open Settings on launch so it can be captured
+            // without driving the tray menu. Same spirit as CLIPWELL_NO_AUTOHIDE.
+            if (Environment.GetEnvironmentVariable("CLIPWELL_SHOW_SETTINGS") == "1")
+                Dispatcher.UIThread.Post(ShowSettings);
         }
 
         base.OnFrameworkInitializationCompleted();
