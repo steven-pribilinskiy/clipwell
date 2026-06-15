@@ -1,6 +1,7 @@
 using System;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Clipwell.Protocol;
 
 namespace Clipwell.Ui;
 
@@ -21,9 +22,10 @@ public partial class SettingsWindow : Window
 
     private async void OnOpened(object? sender, EventArgs e)
     {
-        var days = await _client.GetRetentionAsync();
-        var idx = Array.IndexOf(Retentions, days);
+        var settings = await _client.GetSettingsAsync();
+        var idx = Array.IndexOf(Retentions, settings.RetentionDays);
         RetentionBox.SelectedIndex = idx >= 0 ? idx : 1;
+        OpenAtCursorBox.IsChecked = settings.OpenAtCursor;
     }
 
     private async void OnSave(object? sender, RoutedEventArgs e)
@@ -31,8 +33,12 @@ public partial class SettingsWindow : Window
         var idx = Math.Clamp(RetentionBox.SelectedIndex, 0, Retentions.Length - 1);
         try
         {
-            await _client.SetRetentionAsync(Retentions[idx]);
-            StatusText.Text = "Saved.";
+            await _client.SaveSettingsAsync(new ClipboardSettings
+            {
+                RetentionDays = Retentions[idx],
+                OpenAtCursor = OpenAtCursorBox.IsChecked == true,
+            });
+            StatusText.Text = "Saved. (Re-open the picker for position changes to apply.)";
         }
         catch
         {

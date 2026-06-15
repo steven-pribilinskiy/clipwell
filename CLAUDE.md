@@ -89,6 +89,9 @@ appended to `perf.log` in the data dir. Measured (via `bench/run-bench.ps1`):
 ~170ms cold first show; **~16ms warm** hidden→shown cycle (≈ one 60Hz frame). The
 synchronous render itself is ~1ms; the rest is the native show/activate/focus. See
 ADR-0004. Per-OS global hotkey lives behind `IGlobalHotkey` (Windows done).
+Picker position is centered by default; the `OpenAtCursor` setting opens it at the
+mouse cursor (clamped to the screen) via `IPointerLocation` (Windows done) —
+positioning runs inside the show-cycle, so keep it cheap.
 
 ## Documentation — HARD RULE (update docs with every feature)
 Documentation is part of "done", not a follow-up. For **every** user-visible feature

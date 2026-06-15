@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
@@ -12,7 +13,9 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm = new();
     private readonly IPasteService? _paste;
+    private readonly IPointerLocation? _pointer;
     private bool _initialized;
+    private bool _openAtCursor;
     private nint _pasteTarget;
 
     // Hide when focus is lost (normal picker behavior). Disabled for automated
@@ -22,14 +25,45 @@ public partial class MainWindow : Window
 
     public MainWindow() : this(null) { }
 
-    public MainWindow(IPasteService? paste)
+    public MainWindow(IPasteService? paste, IPointerLocation? pointer = null)
     {
         _paste = paste;
+        _pointer = pointer;
         InitializeComponent();
         DataContext = _vm;
         Closed += (_, _) => _vm.Dispose();
         ItemsList.DoubleTapped += (_, _) => _ = CopySelectedAndHideAsync();
         Deactivated += (_, _) => { if (AutoHide && IsVisible) Hide(); };
+    }
+
+    /// <summary>Refresh the cached open-at-cursor preference from the daemon.</summary>
+    private async Task LoadPrefsAsync()
+    {
+        try { _openAtCursor = (await _vm.Client.GetSettingsAsync()).OpenAtCursor; }
+        catch { /* keep last known / default */ }
+    }
+
+    // Position the picker before showing: at the cursor (clamped to its screen) when
+    // enabled, otherwise leave it centered (the XAML default). Cheap — runs in the
+    // show-cycle, so it must stay off the critical path's hot loop.
+    private void PositionForShow()
+    {
+        if (!_openAtCursor || _pointer is null || !_pointer.TryGetCursor(out var cur))
+            return;
+
+        var screen = Screens.ScreenFromPoint(cur) ?? Screens.Primary;
+        if (screen is null) return;
+
+        var scale = screen.Scaling;
+        var wa = screen.WorkingArea;
+        var winW = (int)(Width * scale);
+        var winH = (int)(Height * scale);
+        // Put the cursor just inside the search box, then clamp so the window stays
+        // fully on the working area.
+        var x = Math.Clamp(cur.X - (int)(40 * scale), wa.X, Math.Max(wa.X, wa.Right - winW));
+        var y = Math.Clamp(cur.Y - (int)(20 * scale), wa.Y, Math.Max(wa.Y, wa.Bottom - winH));
+        WindowStartupLocation = WindowStartupLocation.Manual;
+        Position = new PixelPoint(x, y);
     }
 
     /// <summary>
@@ -41,6 +75,7 @@ public partial class MainWindow : Window
         _pasteTarget = pasteTarget;
         var sw = Stopwatch.StartNew();
         _vm.SearchText = "";
+        PositionForShow();
         Show();
         Activate();
         SearchBox.Focus();
@@ -51,6 +86,7 @@ public partial class MainWindow : Window
         {
             _initialized = true;
             _ = _vm.InitializeAsync();
+            _ = LoadPrefsAsync();
         }
         else
         {

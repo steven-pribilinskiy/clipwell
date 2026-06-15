@@ -15,6 +15,7 @@ public partial class App : Application
     private TrayIcon? _tray;
     private IGlobalHotkey? _hotkey;
     private IPasteService? _paste;
+    private IPointerLocation? _pointer;
 
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
@@ -33,8 +34,12 @@ public partial class App : Application
                 _ => Avalonia.Styling.ThemeVariant.Default,
             };
 
-            if (OperatingSystem.IsWindows()) _paste = new WindowsPasteService();
-            _window = new MainWindow(_paste);
+            if (OperatingSystem.IsWindows())
+            {
+                _paste = new WindowsPasteService();
+                _pointer = new WindowsPointerLocation();
+            }
+            _window = new MainWindow(_paste, _pointer);
             SetUpTray(desktop);
             SetUpHotkey();
 

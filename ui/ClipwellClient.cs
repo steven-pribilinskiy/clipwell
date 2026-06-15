@@ -36,16 +36,14 @@ public sealed class ClipwellClient
         return page?.Items ?? [];
     }
 
-    private sealed record SettingsDto(int? RetentionDays);
-
-    public async Task<int?> GetRetentionAsync()
+    public async Task<ClipboardSettings> GetSettingsAsync()
     {
-        try { return (await _http.GetFromJsonAsync<SettingsDto>("/api/clipboard/settings"))?.RetentionDays; }
-        catch { return 30; }
+        try { return await _http.GetFromJsonAsync<ClipboardSettings>("/api/clipboard/settings") ?? new(); }
+        catch { return new ClipboardSettings(); }
     }
 
-    public async Task SetRetentionAsync(int? days) =>
-        await _http.PostAsJsonAsync("/api/clipboard/settings", new { retentionDays = days });
+    public async Task SaveSettingsAsync(ClipboardSettings settings) =>
+        await _http.PostAsJsonAsync("/api/clipboard/settings", settings);
 
     public async Task DeleteAsync(string timestamp) =>
         await _http.PostAsJsonAsync("/api/clipboard/delete", new { timestamp });

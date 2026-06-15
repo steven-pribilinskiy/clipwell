@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Clipwell.Ui.SettingsWindow"
         Title="Clipwell Settings"
-        Width="420" Height="320"
+        Width="420" Height="420"
         WindowStartupLocation="CenterScreen"
         CanResize="False">
     <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" Padding="24">
@@ -19,6 +19,13 @@
                     <ComboBoxItem>90 days</ComboBoxItem>
                     <ComboBoxItem>Forever</ComboBoxItem>
                 </ComboBox>
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+                <TextBlock Text="Picker position" FontWeight="Medium" />
+                <CheckBox Name="OpenAtCursorBox" Content="Open at the mouse cursor" />
+                <TextBlock Text="Otherwise the picker opens centered on the screen."
+                           FontSize="12" Opacity="0.6" />
             </StackPanel>
 
             <StackPanel Spacing="6">
