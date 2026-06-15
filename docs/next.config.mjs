@@ -11,6 +11,9 @@ const config = {
   reactStrictMode: true,
   basePath: base || undefined,
   images: { unoptimized: true },
+  // Exposed to client components (e.g. <ThemedClip>) so raw asset URLs like
+  // <video src> get the Pages subpath prefix that next/image applies automatically.
+  env: { NEXT_PUBLIC_PAGES_BASE: base },
 };
 
 export default withMDX(config);

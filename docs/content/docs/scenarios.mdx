@@ -5,6 +5,14 @@ description: How to use the Clipwell picker day to day.
 
 The picker is a pre‑warmed window that appears the instant you press the hotkey.
 
+<ThemedShot
+  name="picker"
+  alt="The Clipwell picker showing a search box, filter tabs, and a list of typed clipboard items"
+  width={862}
+  height={1016}
+  caption="The picker: search, filter tabs, and typed history — shown here in your current theme."
+/>
+
 ## Find and paste something you copied earlier
 
 1. Press **Alt+Shift+V**. The picker appears centered, search box focused.
@@ -16,6 +24,14 @@ The picker is a pre‑warmed window that appears the instant you press the hotke
 > Clipwell remembers which window was focused when you opened the picker, so the
 > paste lands back in the right place.
 
+<ThemedClip
+  name="usage"
+  poster="picker"
+  width={862}
+  height={1016}
+  caption="Type to filter the history live — here narrowing to the URL, then clearing."
+/>
+
 ## Recognize items at a glance
 
 Every item is classified and shown with a glyph:
@@ -26,15 +42,52 @@ Every item is classified and shown with a glyph:
 | ✉     | email | `you@example.com` |
 | 🎨    | color | `#3366ff` |
 | 📁    | path  | `C:\Users\you\file.txt` |
-| `{ }` | code  | `function add(a, b) { return a + b; }` |
+| `{ }` | code  | `const sum = (a, b) => a + b;` |
 | 🖼     | image | a screenshot |
 | 📄    | text  | anything else |
 
 Classification is done by pluggable detectors, so the set of kinds can be extended.
+Image items show a **thumbnail** in place of the glyph, so you can spot the right
+screenshot without opening it.
+
+## Filter to what you need
+
+The tabs below the search box narrow the list instantly:
+
+- **All** — everything, newest first (pinned items float to the top).
+- **📌 Pinned** — only items you've pinned for reuse.
+- **🔒 Sensitive** — only items you've flagged as sensitive.
+
+Keyboard shortcuts work on the selected item: **Ctrl+1 / Ctrl+2 / Ctrl+3** switch
+tabs, **Delete** removes an item, **Ctrl+P** toggles pin, **Ctrl+E** toggles the
+sensitive flag.
+
+## Pin snippets you reuse
+
+Pin the things you paste over and over — a sign‑off, a command, a code snippet.
+Select an item and press **Ctrl+P** (or use the **📌 Pinned** tab to manage them).
+Pinned items are sorted to the top of the list and survive history retention sweeps.
+
+## Hide sensitive items
+
+Flag an item as **sensitive** (**Ctrl+E**) and its preview is masked in the list as
+`•••••••••••`, so a password or token doesn't sit in plain sight while you scroll.
+Sensitive image items don't render a thumbnail.
+
+## Adjust retention and see your hotkey
+
+Open **Settings…** from the tray menu to choose how long history is kept
+(7 / 30 / 90 days, or **Forever**) and to see the global hotkey.
+
+<ThemedShot
+  name="settings"
+  alt="The Clipwell settings window with a history-retention dropdown and the global hotkey"
+  width={652}
+  height={536}
+  caption="Settings: history retention and the global hotkey."
+/>
 
 ## Keep it running in the background
 
 Clipwell lives in the system tray. Closing the picker window doesn't quit it — use
 the tray menu's **Quit** for that. Only one instance runs at a time.
-
-{/* TODO: add screenshots/short WebM clips per scenario once captured */}

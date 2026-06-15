@@ -93,9 +93,21 @@ or behavior change:
    and add the feature to the relevant list. Refresh `llms.txt` is automatic.
 2. Add or refresh **media**: a screenshot (and a short usage clip where it helps) of
    the new behavior, under `docs/public/media/`. Re-capture screenshots whenever the
-   UI changes so they never go stale. Capture method: run the app against an isolated
-   DB (`CLIPWELL_DATA_DIR`), use the picker, `PrintWindow` the window (works even when
-   not foreground), or drive the docs site via Chrome.
+   UI changes so they never go stale.
+   - **Use the capture scripts** — don't hand-roll: `pwsh bench/capture-shots.ps1`
+     (picker + settings PNGs) and `pwsh bench/capture-clip.ps1` (a "filter as you
+     type" WebM). Run them with **Windows PowerShell** (`powershell.exe`), not pwsh 7
+     — they need `System.Drawing`/`System.Windows.Forms`.
+   - **Both themes, always.** The docs sites are light/dark with the OS preference as
+     default, so every screenshot/clip ships a `-light` and a `-dark` variant; embed
+     via `<ThemedShot>` / `<ThemedClip>` so they swap with the docs theme. The scripts
+     force the app theme with `CLIPWELL_THEME=light|dark`.
+   - **No leaks.** The daemon watches the *global* clipboard, so the scripts seed an
+     isolated DB, then **restart the daemon with `CLIPWELL_NO_WATCH=1`** (watcher off)
+     before capturing — otherwise the user's live copies leak into the media. They also
+     `PrintWindow` with `SetProcessDPIAware` so high-DPI windows aren't clipped.
+   - Screenshot-only app hooks: `CLIPWELL_SHOW_SETTINGS=1` opens Settings on launch;
+     `CLIPWELL_NO_AUTOHIDE=1` keeps the picker visible.
 3. Update the **engineering docs** (`engineering/content/docs/`) when architecture,
    the API surface, or a decision changes — and write a new **ADR** for any decision.
 4. Update this **CLAUDE.md**, the **README**, and the **OpenAPI** spec if endpoints
@@ -116,6 +128,11 @@ pwsh bench/run-bench.ps1        # measures REST latency + picker show-cycle
 - Always run against an isolated `CLIPWELL_DATA_DIR`, never real history.
 
 ## Documentation sites
+Both sites are **light/dark themed with the OS preference as the default** (set on
+Fumadocs' `RootProvider` in each `src/components/provider.tsx`). Theme-aware media
+uses `<ThemedShot>`/`<ThemedClip>` (in `docs/src/components/`), which swap the
+`-light`/`-dark` asset via the `.dark` class. `<video>` URLs need the Pages subpath,
+exposed to the client as `NEXT_PUBLIC_PAGES_BASE` (set in `next.config.mjs`).
 - `docs/` — user-facing feature docs (Fumadocs, Next.js static export). Landing page
   at `src/app/(home)/page.tsx`; content in `content/docs/`.
 - `engineering/` — how-it-was-built site (same stack). Mermaid diagrams via the

@@ -1,9 +1,10 @@
 import Link from 'next/link';
+import { ThemedShot } from '@/components/themed-shot';
 
 const features = [
   {
     title: 'Frame-fast picker',
-    body: 'A pre-warmed window appears in about one display frame (~16 ms measured) on a global hotkey. No cold start, no lag.',
+    body: 'A pre-warmed window appears in about one display frame (~13–16 ms measured) on a global hotkey. No cold start, no lag.',
     icon: '⚡',
   },
   {
@@ -72,6 +73,14 @@ export default function HomePage() {
           <code>{`dotnet run --project daemon   # clipboard API on :8787
 dotnet run --project ui       # press Alt+Shift+V to summon`}</code>
         </pre>
+        <div className="mt-8 w-full max-w-2xl">
+          <ThemedShot
+            name="picker"
+            alt="The Clipwell picker showing typed clipboard items, filter tabs, and an image thumbnail"
+            width={862}
+            height={1016}
+          />
+        </div>
       </section>
 
       {/* Features */}
