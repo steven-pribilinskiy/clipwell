@@ -1,8 +1,10 @@
 using System;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Clipwell.Protocol;
+using Clipwell.Ui.Platform;
 
 namespace Clipwell.Ui;
 
@@ -12,6 +14,12 @@ public partial class SettingsWindow : Window
 
     // ComboBox index ↔ retention days (null = forever).
     private static readonly int?[] Retentions = [7, 30, 90, null];
+    private static readonly string[] Themes = ["system", "light", "dark"];
+    private static readonly string[] Views = ["compact", "detail"];
+    private static readonly string[] Groups = ["none", "date", "source"];
+
+    private string _hotkey = "Alt+Shift+V";
+    private bool _recording;
 
     public SettingsWindow()
     {
@@ -26,11 +34,40 @@ public partial class SettingsWindow : Window
         Opened += OnOpened;
         CloseButton.Click += (_, _) => Close();
         SaveButton.Click += OnSave;
+        RecordButton.Click += (_, _) =>
+        {
+            _recording = true;
+            HotkeyText.Text = "Press a combo…";
+        };
+        AddHandler(KeyDownEvent, OnRecordKey, Avalonia.Interactivity.RoutingStrategies.Tunnel);
     }
 
-    private static readonly string[] Themes = ["system", "light", "dark"];
-    private static readonly string[] Views = ["compact", "detail"];
-    private static readonly string[] Groups = ["none", "date", "source"];
+    private void OnRecordKey(object? sender, KeyEventArgs e)
+    {
+        if (!_recording) return;
+        var key = KeyToString(e.Key);
+        if (key is null) return; // modifier-only or unsupported — keep waiting
+        var chord = new HotkeyChord(
+            Alt: e.KeyModifiers.HasFlag(KeyModifiers.Alt),
+            Ctrl: e.KeyModifiers.HasFlag(KeyModifiers.Control),
+            Shift: e.KeyModifiers.HasFlag(KeyModifiers.Shift),
+            Win: e.KeyModifiers.HasFlag(KeyModifiers.Meta),
+            Key: key);
+        if (!chord.Alt && !chord.Ctrl && !chord.Shift && !chord.Win) return; // need a modifier
+        _hotkey = chord.Display;
+        HotkeyText.Text = _hotkey;
+        _recording = false;
+        e.Handled = true;
+    }
+
+    private static string? KeyToString(Key k)
+    {
+        if (k is >= Key.A and <= Key.Z) return k.ToString();
+        if (k is >= Key.D0 and <= Key.D9) return ((char)('0' + (k - Key.D0))).ToString();
+        if (k is >= Key.NumPad0 and <= Key.NumPad9) return ((char)('0' + (k - Key.NumPad0))).ToString();
+        if (k is >= Key.F1 and <= Key.F12) return k.ToString();
+        return null;
+    }
 
     private async void OnOpened(object? sender, EventArgs e)
     {
@@ -43,6 +80,8 @@ public partial class SettingsWindow : Window
         GroupBox.SelectedIndex = Math.Max(0, Array.IndexOf(Groups, s.DefaultGroup));
         ShowSourceBox.IsChecked = s.ShowSource;
         ShowTimeBox.IsChecked = s.ShowTime;
+        _hotkey = string.IsNullOrWhiteSpace(s.Hotkey) ? "Alt+Shift+V" : s.Hotkey;
+        HotkeyText.Text = _hotkey;
     }
 
     private async void OnSave(object? sender, RoutedEventArgs e)
@@ -59,8 +98,10 @@ public partial class SettingsWindow : Window
                 DefaultGroup = Groups[Math.Max(0, GroupBox.SelectedIndex)],
                 ShowSource = ShowSourceBox.IsChecked == true,
                 ShowTime = ShowTimeBox.IsChecked == true,
+                Hotkey = _hotkey,
             });
-            StatusText.Text = "Saved. Re-open the picker to apply.";
+            App.NotifySettingsChanged(); // apply live (theme, view, metadata, hotkey)
+            StatusText.Text = "Saved.";
         }
         catch
         {

@@ -21,9 +21,6 @@ public sealed class MacGlobalHotkey : IGlobalHotkey
 {
     private const string Carbon = "/System/Library/Frameworks/Carbon.framework/Carbon";
 
-    // Carbon modifier masks and the 'V' virtual key code.
-    private const uint ShiftKey = 0x0200, OptionKey = 0x0800;
-    private const uint KVK_ANSI_V = 0x09;
     private const uint EventClassKeyboard = 0x6B657962; // 'keyb'
     private const uint EventHotKeyPressed = 5;
 
@@ -36,7 +33,11 @@ public sealed class MacGlobalHotkey : IGlobalHotkey
     private IntPtr _handlerRef;
     private HandlerDelegate? _handler; // kept alive against GC
 
-    public bool Register()
+    // Live rebind would need to re-run on the main run loop; the new chord applies
+    // on next launch.
+    public bool Rebind(HotkeyChord chord) => false;
+
+    public bool Register(HotkeyChord chord)
     {
         try
         {
@@ -50,7 +51,7 @@ public sealed class MacGlobalHotkey : IGlobalHotkey
             if (status != 0) return false;
 
             var id = new EventHotKeyID { Signature = 0x636C7077 /* 'clpw' */, Id = 1 };
-            status = RegisterEventHotKey(KVK_ANSI_V, OptionKey | ShiftKey, id, target, 0, out _hotKeyRef);
+            status = RegisterEventHotKey(chord.MacKeyCode(), chord.MacModifiers(), id, target, 0, out _hotKeyRef);
             return status == 0;
         }
         catch

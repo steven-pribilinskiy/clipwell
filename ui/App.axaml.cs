@@ -11,6 +11,10 @@ namespace Clipwell.Ui;
 
 public partial class App : Application
 {
+    /// <summary>Raised by the settings window after a save, to re-apply live.</summary>
+    public static event Action? SettingsChanged;
+    public static void NotifySettingsChanged() => SettingsChanged?.Invoke();
+
     private MainWindow? _window;
     private TrayIcon? _tray;
     private IGlobalHotkey? _hotkey;
@@ -54,7 +58,9 @@ public partial class App : Application
             // Show once on launch so the app is discoverable.
             _window.ShowPicker();
 
-            // Apply persisted UI prefs (theme, default view/grouping, metadata).
+            // Apply persisted UI prefs (theme, view/grouping, metadata, hotkey), and
+            // re-apply whenever settings are saved (live, no restart).
+            SettingsChanged += () => Dispatcher.UIThread.Post(() => _ = ApplySavedSettingsAsync());
             _ = ApplySavedSettingsAsync();
 
             // Screenshot-test hook: open Settings on launch so it can be captured
@@ -110,6 +116,7 @@ public partial class App : Application
                     _ => Avalonia.Styling.ThemeVariant.Default,
                 };
             _window?.ApplyPreferences(s);
+            _hotkey?.Rebind(HotkeyChord.Parse(s.Hotkey)); // live on Windows; next launch on mac/Linux
         }
         catch { /* daemon not reachable yet — defaults stand */ }
     }
@@ -141,7 +148,7 @@ public partial class App : Application
             var target = _paste?.GetForegroundWindow() ?? 0;
             Dispatcher.UIThread.Post(() => _window?.ShowPicker(target));
         };
-        if (!_hotkey.Register())
+        if (!_hotkey.Register(HotkeyChord.Default)) // saved chord applied by ApplySavedSettingsAsync
             _hotkey = null; // registration failed (e.g. Wayland / no perms) → tray-only
     }
 }

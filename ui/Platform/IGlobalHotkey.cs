@@ -11,6 +11,9 @@ public interface IGlobalHotkey : IDisposable
     /// <summary>Raised (on a background thread) when the hotkey is pressed.</summary>
     event Action? Pressed;
 
-    /// <summary>Registers the hotkey. Returns false if registration failed.</summary>
-    bool Register();
+    /// <summary>Registers the given chord. Returns false if registration failed.</summary>
+    bool Register(HotkeyChord chord);
+
+    /// <summary>Re-register with a new chord at runtime (returns false on failure).</summary>
+    bool Rebind(HotkeyChord chord);
 }

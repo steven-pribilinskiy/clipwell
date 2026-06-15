@@ -19,21 +19,25 @@ namespace Clipwell.Ui.Platform;
 [SupportedOSPlatform("linux")]
 public sealed class LinuxGlobalHotkey : IGlobalHotkey
 {
-    // X11 modifier masks.
-    private const uint ShiftMask = 0x01, LockMask = 0x02, Mod1Mask = 0x08, Mod2Mask = 0x10;
+    // X11 lock modifiers (combined with the chord's modifiers when grabbing).
+    private const uint LockMask = 0x02, Mod2Mask = 0x10;
     private const int KeyPress = 2;
     private const int GrabModeAsync = 1;
-    private const ulong XK_v = 0x0076;
 
     public event Action? Pressed;
 
     private IntPtr _display;
     private ulong _root;
     private byte _keycode;
+    private uint _mods;
     private Thread? _thread;
     private volatile bool _running;
 
-    public bool Register()
+    // Live rebind on X11 would need ungrab/regrab on the event thread; for now the
+    // new chord applies on next launch.
+    public bool Rebind(HotkeyChord chord) => false;
+
+    public bool Register(HotkeyChord chord)
     {
         try
         {
@@ -41,10 +45,10 @@ public sealed class LinuxGlobalHotkey : IGlobalHotkey
             if (_display == IntPtr.Zero) return false; // no X server (e.g. headless / Wayland-only)
 
             _root = XDefaultRootWindow(_display);
-            _keycode = XKeysymToKeycode(_display, XK_v);
+            _keycode = XKeysymToKeycode(_display, chord.X11Keysym());
             if (_keycode == 0) return false;
 
-            var baseMods = ShiftMask | Mod1Mask; // Shift+Alt
+            var baseMods = _mods = chord.X11Modifiers();
             // Grab the chord with every combination of the "lock" modifiers (Caps/Num)
             // so it fires regardless of their state.
             foreach (var extra in new[] { 0u, LockMask, Mod2Mask, LockMask | Mod2Mask })
@@ -94,7 +98,7 @@ public sealed class LinuxGlobalHotkey : IGlobalHotkey
         {
             if (_display != IntPtr.Zero)
             {
-                XUngrabKey(_display, _keycode, ShiftMask | Mod1Mask, _root);
+                XUngrabKey(_display, _keycode, _mods, _root);
                 XCloseDisplay(_display);
                 _display = IntPtr.Zero;
             }

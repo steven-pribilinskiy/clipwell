@@ -14,8 +14,8 @@ public sealed class WindowsGlobalHotkey : IGlobalHotkey
 {
     private const int WM_HOTKEY = 0x0312;
     private const int WM_DESTROY = 0x0002;
-    private const uint MOD_ALT = 0x1, MOD_CONTROL = 0x2, MOD_SHIFT = 0x4, MOD_NOREPEAT = 0x4000;
-    private const uint VK_V = 0x56;
+    private const int WM_REBIND = 0x8000; // WM_APP — re-register the current chord
+    private const uint MOD_NOREPEAT = 0x4000;
     private const int HotkeyId = 0xC110;
     private static readonly IntPtr HWND_MESSAGE = new(-3);
 
@@ -25,15 +25,31 @@ public sealed class WindowsGlobalHotkey : IGlobalHotkey
     private IntPtr _hwnd;
     private WndProc? _wndProc;
     private volatile bool _started;
+    private volatile HotkeyChord _chord = HotkeyChord.Default;
 
-    public bool Register()
+    public bool Register(HotkeyChord chord)
     {
+        _chord = chord;
         if (_started) return true;
         _started = true;
         _thread = new Thread(Run) { IsBackground = true, Name = "clipwell-hotkey" };
         _thread.SetApartmentState(ApartmentState.STA);
         _thread.Start();
         return true;
+    }
+
+    public bool Rebind(HotkeyChord chord)
+    {
+        _chord = chord;
+        if (_hwnd != IntPtr.Zero) PostMessage(_hwnd, WM_REBIND, IntPtr.Zero, IntPtr.Zero);
+        return true;
+    }
+
+    private void Apply()
+    {
+        UnregisterHotKey(_hwnd, HotkeyId);
+        var c = _chord;
+        RegisterHotKey(_hwnd, HotkeyId, c.WinModifiers() | MOD_NOREPEAT, c.WinVk());
     }
 
     private void Run()
@@ -51,7 +67,7 @@ public sealed class WindowsGlobalHotkey : IGlobalHotkey
             HWND_MESSAGE, IntPtr.Zero, wc.hInstance, IntPtr.Zero);
         if (_hwnd == IntPtr.Zero) return;
 
-        RegisterHotKey(_hwnd, HotkeyId, MOD_ALT | MOD_SHIFT | MOD_NOREPEAT, VK_V);
+        Apply();
 
         while (GetMessage(out var msg, IntPtr.Zero, 0, 0) > 0)
         {
@@ -63,6 +79,7 @@ public sealed class WindowsGlobalHotkey : IGlobalHotkey
     private IntPtr WindowProc(IntPtr h, uint msg, IntPtr w, IntPtr l)
     {
         if (msg == WM_HOTKEY && (int)w == HotkeyId) { Pressed?.Invoke(); return IntPtr.Zero; }
+        if (msg == WM_REBIND) { Apply(); return IntPtr.Zero; }
         if (msg == WM_DESTROY) UnregisterHotKey(h, HotkeyId);
         return DefWindowProc(h, msg, w, l);
     }

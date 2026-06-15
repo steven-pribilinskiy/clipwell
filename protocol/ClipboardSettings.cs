@@ -31,6 +31,9 @@ public sealed record ClipboardSettings
     /// <summary>Show the relative time in each row's metadata line.</summary>
     public bool ShowTime { get; init; } = true;
 
+    /// <summary>Global hotkey chord, e.g. "Alt+Shift+V".</summary>
+    public string Hotkey { get; init; } = "Alt+Shift+V";
+
     /// <summary>Retention values the UI offers; anything else falls back to the default.</summary>
     public static readonly int?[] ValidRetentions = [7, 30, 90, null];
 }

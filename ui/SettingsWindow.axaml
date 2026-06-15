@@ -72,11 +72,15 @@
 
                     <StackPanel Spacing="6">
                         <TextBlock Text="Global hotkey" FontWeight="Medium" />
-                        <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
-                                CornerRadius="6" Padding="10,6" HorizontalAlignment="Left">
-                            <TextBlock Text="Alt + Shift + V" FontFamily="Cascadia Code,Consolas,monospace" />
-                        </Border>
-                        <TextBlock Text="Press to summon the picker. (Rebinding is coming soon.)"
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                    CornerRadius="6" Padding="10,6" MinWidth="140" VerticalAlignment="Center">
+                                <TextBlock Name="HotkeyText" Text="Alt+Shift+V"
+                                           FontFamily="Cascadia Code,Consolas,monospace" />
+                            </Border>
+                            <Button Name="RecordButton" Content="Change…" Padding="12,6" />
+                        </StackPanel>
+                        <TextBlock Text="Click Change, then press a combo (e.g. Ctrl+Shift+V). Requires a modifier."
                                    FontSize="12" Opacity="0.6" />
                     </StackPanel>
 

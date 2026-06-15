@@ -39,6 +39,9 @@ The daemon watches the clipboard by polling the platform CLI, so install one:
 The tray icon is cross‑platform (Avalonia). The **global hotkey** and
 **paste‑into‑the‑source‑app** are now implemented natively per OS:
 
+The hotkey is **rebindable** in Settings → Global hotkey (default below per OS;
+applies live on Windows, on next launch on macOS/Linux).
+
 - **macOS** — hotkey is **Option+Shift+V** (Carbon `RegisterEventHotKey`); pasting
   synthesizes Cmd+V and needs **Accessibility** permission (System Settings →
   Privacy & Security → Accessibility). Without it, the item is still copied.
