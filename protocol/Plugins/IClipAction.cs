@@ -16,4 +16,7 @@ public interface IClipAction
 
     /// <summary>Whether this action applies to the given item.</summary>
     bool AppliesTo(ClipItem item);
+
+    /// <summary>Run the action for the item, using host-provided services.</summary>
+    Task ExecuteAsync(ClipItem item, IClipActionContext ctx);
 }

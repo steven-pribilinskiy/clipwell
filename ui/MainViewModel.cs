@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Clipwell.Protocol;
+using Clipwell.Protocol.Plugins;
+using Clipwell.Ui.Actions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -27,6 +29,12 @@ public sealed record KindOption(string Label, string Value)
 
 /// <summary>A grouping option for the picker (none / date / source).</summary>
 public sealed record GroupOption(string Label, string Value)
+{
+    public override string ToString() => Label;
+}
+
+/// <summary>An entry in the Ctrl+K action palette.</summary>
+public sealed record ActionEntry(string Label, IClipAction Action)
 {
     public override string ToString() => Label;
 }
@@ -111,6 +119,48 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     public void CloseQuickLook() => IsQuickLook = false;
+
+    // ── Action palette (Ctrl+K) ──────────────────────────────────────────
+    private readonly ActionRegistry _actions = new();
+    private List<ActionEntry> _applicableActions = [];
+
+    [ObservableProperty]
+    private bool _isActionPalette;
+
+    [ObservableProperty]
+    private string _actionSearch = "";
+
+    [ObservableProperty]
+    private ActionEntry? _selectedAction;
+
+    public ObservableCollection<ActionEntry> ActionItems { get; } = [];
+
+    /// <summary>Open the palette for the selected item. Returns false if no actions apply.</summary>
+    public bool OpenActionPalette()
+    {
+        if (Selected is null) return false;
+        _applicableActions = _actions.ActionsFor(Selected.Item)
+            .Select(a => new ActionEntry(a.Label, a)).ToList();
+        if (_applicableActions.Count == 0) return false;
+        ActionSearch = "";
+        FillActionItems();
+        IsActionPalette = true;
+        return true;
+    }
+
+    public void CloseActionPalette() => IsActionPalette = false;
+
+    partial void OnActionSearchChanged(string value) => FillActionItems();
+
+    private void FillActionItems()
+    {
+        var q = ActionSearch.Trim();
+        ActionItems.Clear();
+        foreach (var a in _applicableActions)
+            if (q.Length == 0 || a.Label.Contains(q, StringComparison.OrdinalIgnoreCase))
+                ActionItems.Add(a);
+        SelectedAction = ActionItems.FirstOrDefault();
+    }
 
     partial void OnIsDetailChanged(bool value) => OnPropertyChanged(nameof(ViewToggleLabel));
 

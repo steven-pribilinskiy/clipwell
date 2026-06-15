@@ -140,6 +140,14 @@ try {
         Stop-Ui; Start-Sleep -Seconds 2
         $env:CLIPWELL_GROUP = ''
 
+        # Action palette (Ctrl+K)
+        $env:CLIPWELL_ACTIONS = '1'
+        Start-Process -FilePath $uiExe -WindowStyle Normal -RedirectStandardOutput (Join-Path $dataDir "ua-$theme.out") -RedirectStandardError (Join-Path $dataDir "ua-$theme.err")
+        Start-Sleep -Seconds 8
+        Write-Host "actions-$theme.png: $([Shot]::Grab('Clipwell', (Join-Path $outDir "actions-$theme.png")))"
+        Stop-Ui; Start-Sleep -Seconds 2
+        $env:CLIPWELL_ACTIONS = '0'
+
         # Quick Look overlay (Ctrl+Y)
         $env:CLIPWELL_QUICKLOOK = '1'
         Start-Process -FilePath $uiExe -WindowStyle Normal -RedirectStandardOutput (Join-Path $dataDir "uq-$theme.out") -RedirectStandardError (Join-Path $dataDir "uq-$theme.err")

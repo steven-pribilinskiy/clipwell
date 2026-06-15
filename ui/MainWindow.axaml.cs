@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -45,6 +46,9 @@ public partial class MainWindow : Window
         RenameBox.KeyDown += OnRenameBoxKeyDown;
         ItemsList.AddHandler(ScrollViewer.ScrollChangedEvent, OnListScrollChanged);
         QuickLookBackdrop.PointerPressed += (_, _) => _vm.CloseQuickLook();
+        ActionBackdrop.PointerPressed += (_, _) => _vm.CloseActionPalette();
+        ActionSearchBox.KeyDown += OnActionSearchKeyDown;
+        ActionList.DoubleTapped += (_, _) => _ = RunSelectedActionAsync();
         // Widen the window when the Detail preview pane is showing.
         _vm.PropertyChanged += (_, e) =>
         {
@@ -59,9 +63,19 @@ public partial class MainWindow : Window
         var grp = Environment.GetEnvironmentVariable("CLIPWELL_GROUP");
         if (!string.IsNullOrEmpty(grp))
         {
-            var opt = System.Linq.Enumerable.FirstOrDefault(_vm.GroupOptions, g => g.Value == grp);
+            var opt = _vm.GroupOptions.FirstOrDefault(g => g.Value == grp);
             if (opt is not null) _vm.SelectedGroup = opt;
         }
+        if (Environment.GetEnvironmentVariable("CLIPWELL_ACTIONS") == "1")
+            _ = OpenActionsForCaptureAsync();
+    }
+
+    private async Task OpenActionsForCaptureAsync()
+    {
+        await Task.Delay(3000); // let history load
+        var url = _vm.Items.FirstOrDefault(r => r.Item.Kind is "url" or "github-pr");
+        if (url is not null) _vm.Selected = url;
+        if (_vm.OpenActionPalette()) ActionSearchBox.Focus();
     }
 
     private ScrollViewer? _listScroll;
@@ -73,6 +87,37 @@ public partial class MainWindow : Window
         if (_listScroll is null) return;
         var remaining = _listScroll.Extent.Height - (_listScroll.Offset.Y + _listScroll.Viewport.Height);
         if (remaining < 400) _ = _vm.LoadMoreAsync();
+    }
+
+    private void OnActionSearchKeyDown(object? sender, KeyEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case Key.Enter:
+                _ = RunSelectedActionAsync();
+                e.Handled = true;
+                break;
+            case Key.Escape:
+                _vm.CloseActionPalette();
+                SearchBox.Focus();
+                e.Handled = true;
+                break;
+            case Key.Down when ActionList.ItemCount > 0:
+                ActionList.Focus();
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private async Task RunSelectedActionAsync()
+    {
+        var entry = _vm.SelectedAction;
+        var item = _vm.Selected?.Item;
+        _vm.CloseActionPalette();
+        if (entry is null || item is null) return;
+        var ctx = new Clipwell.Ui.Actions.ActionContext(Clipboard);
+        await entry.Action.ExecuteAsync(item, ctx);
+        Hide();
     }
 
     private void OnRenameBoxKeyDown(object? sender, KeyEventArgs e)
@@ -166,12 +211,18 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                if (_vm.IsQuickLook) _vm.CloseQuickLook();
+                if (_vm.IsActionPalette) _vm.CloseActionPalette();
+                else if (_vm.IsQuickLook) _vm.CloseQuickLook();
                 else Hide();
                 e.Handled = true;
                 break;
             case Key.Y when e.KeyModifiers.HasFlag(KeyModifiers.Control):
                 _vm.ToggleQuickLook();
+                e.Handled = true;
+                break;
+            case Key.K when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                if (_vm.IsActionPalette) _vm.CloseActionPalette();
+                else if (_vm.OpenActionPalette()) ActionSearchBox.Focus();
                 e.Handled = true;
                 break;
             case Key.Enter:
