@@ -92,11 +92,13 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>Refresh the cached open-at-cursor preference from the daemon.</summary>
-    private async Task LoadPrefsAsync()
+    /// <summary>Apply persisted UI preferences (called by App after loading settings).</summary>
+    public void ApplyPreferences(Clipwell.Protocol.ClipboardSettings s)
     {
-        try { _openAtCursor = (await _vm.Client.GetSettingsAsync()).OpenAtCursor; }
-        catch { /* keep last known / default */ }
+        _openAtCursor = s.OpenAtCursor;
+        ClipDisplay.ShowSource = s.ShowSource;
+        ClipDisplay.ShowTime = s.ShowTime;
+        _vm.ApplyPreferences(s);
     }
 
     // Position the picker before showing: at the cursor (clamped to its screen) when
@@ -152,7 +154,6 @@ public partial class MainWindow : Window
         {
             _initialized = true;
             _ = _vm.InitializeAsync();
-            _ = LoadPrefsAsync();
         }
         else
         {

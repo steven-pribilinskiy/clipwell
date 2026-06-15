@@ -8,6 +8,13 @@ using Clipwell.Protocol;
 
 namespace Clipwell.Ui;
 
+/// <summary>Row metadata display options, applied from settings at startup.</summary>
+public static class ClipDisplay
+{
+    public static bool ShowSource = true;
+    public static bool ShowTime = true;
+}
+
 /// <summary>
 /// View-side wrapper around a <see cref="ClipItem"/> that exposes display-ready
 /// strings (and, for image items, an async-loaded thumbnail).
@@ -113,8 +120,10 @@ public sealed class ClipRow : INotifyPropertyChanged
     {
         get
         {
-            var when = FormatWhen(Item.Timestamp);
-            return string.IsNullOrEmpty(Item.SourceApp) ? when : $"{Item.SourceApp} · {when}";
+            var parts = new System.Collections.Generic.List<string>(2);
+            if (ClipDisplay.ShowSource && !string.IsNullOrEmpty(Item.SourceApp)) parts.Add(Item.SourceApp!);
+            if (ClipDisplay.ShowTime) parts.Add(FormatWhen(Item.Timestamp));
+            return string.Join(" · ", parts);
         }
     }
 

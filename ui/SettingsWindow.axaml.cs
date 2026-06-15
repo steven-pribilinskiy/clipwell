@@ -28,12 +28,21 @@ public partial class SettingsWindow : Window
         SaveButton.Click += OnSave;
     }
 
+    private static readonly string[] Themes = ["system", "light", "dark"];
+    private static readonly string[] Views = ["compact", "detail"];
+    private static readonly string[] Groups = ["none", "date", "source"];
+
     private async void OnOpened(object? sender, EventArgs e)
     {
-        var settings = await _client.GetSettingsAsync();
-        var idx = Array.IndexOf(Retentions, settings.RetentionDays);
+        var s = await _client.GetSettingsAsync();
+        var idx = Array.IndexOf(Retentions, s.RetentionDays);
         RetentionBox.SelectedIndex = idx >= 0 ? idx : 1;
-        OpenAtCursorBox.IsChecked = settings.OpenAtCursor;
+        OpenAtCursorBox.IsChecked = s.OpenAtCursor;
+        ThemeBox.SelectedIndex = Math.Max(0, Array.IndexOf(Themes, s.Theme));
+        ViewBox.SelectedIndex = Math.Max(0, Array.IndexOf(Views, s.DefaultView));
+        GroupBox.SelectedIndex = Math.Max(0, Array.IndexOf(Groups, s.DefaultGroup));
+        ShowSourceBox.IsChecked = s.ShowSource;
+        ShowTimeBox.IsChecked = s.ShowTime;
     }
 
     private async void OnSave(object? sender, RoutedEventArgs e)
@@ -45,8 +54,13 @@ public partial class SettingsWindow : Window
             {
                 RetentionDays = Retentions[idx],
                 OpenAtCursor = OpenAtCursorBox.IsChecked == true,
+                Theme = Themes[Math.Max(0, ThemeBox.SelectedIndex)],
+                DefaultView = Views[Math.Max(0, ViewBox.SelectedIndex)],
+                DefaultGroup = Groups[Math.Max(0, GroupBox.SelectedIndex)],
+                ShowSource = ShowSourceBox.IsChecked == true,
+                ShowTime = ShowTimeBox.IsChecked == true,
             });
-            StatusText.Text = "Saved. (Re-open the picker for position changes to apply.)";
+            StatusText.Text = "Saved. Re-open the picker to apply.";
         }
         catch
         {

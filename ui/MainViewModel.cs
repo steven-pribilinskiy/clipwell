@@ -164,6 +164,15 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Force a fresh load (used when the picker is re-shown).</summary>
     public Task RefreshAsync() => ReloadAsync();
 
+    /// <summary>Apply persisted UI preferences (default view + grouping) and refresh.</summary>
+    public void ApplyPreferences(ClipboardSettings s)
+    {
+        IsDetail = s.DefaultView == "detail";
+        var g = GroupOptions.FirstOrDefault(o => o.Value == s.DefaultGroup);
+        if (g is not null) SelectedGroup = g;
+        ApplyFilter(); // rebuild rows so metadata toggles take effect
+    }
+
     partial void OnSearchTextChanged(string value) => ApplyFilter();
     partial void OnFilterChanged(ClipFilter value) => ApplyFilter();
     partial void OnSelectedKindChanged(KindOption value) => ApplyFilter();

@@ -54,6 +54,9 @@ public partial class App : Application
             // Show once on launch so the app is discoverable.
             _window.ShowPicker();
 
+            // Apply persisted UI prefs (theme, default view/grouping, metadata).
+            _ = ApplySavedSettingsAsync();
+
             // Screenshot-test hook: open Settings on launch so it can be captured
             // without driving the tray menu. Same spirit as CLIPWELL_NO_AUTOHIDE.
             if (Environment.GetEnvironmentVariable("CLIPWELL_SHOW_SETTINGS") == "1")
@@ -91,6 +94,24 @@ public partial class App : Application
         _tray = new TrayIcon { ToolTipText = "Clipwell", Menu = menu };
         if (icon is not null) _tray.Icon = icon;
         _tray.Clicked += (_, _) => _window?.ShowPicker();
+    }
+
+    private async System.Threading.Tasks.Task ApplySavedSettingsAsync()
+    {
+        try
+        {
+            var s = await new ClipwellClient().GetSettingsAsync();
+            // Env theme (screenshot capture) wins over the saved preference.
+            if (Environment.GetEnvironmentVariable("CLIPWELL_THEME") is null)
+                RequestedThemeVariant = s.Theme switch
+                {
+                    "light" => Avalonia.Styling.ThemeVariant.Light,
+                    "dark" => Avalonia.Styling.ThemeVariant.Dark,
+                    _ => Avalonia.Styling.ThemeVariant.Default,
+                };
+            _window?.ApplyPreferences(s);
+        }
+        catch { /* daemon not reachable yet — defaults stand */ }
     }
 
     private SettingsWindow? _settingsWindow;
