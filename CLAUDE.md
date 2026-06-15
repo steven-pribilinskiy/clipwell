@@ -71,7 +71,17 @@ from the old `clipboard-store.ts` so existing history files keep working.
 - `NullClipboardWatcher` — fallback so the daemon runs everywhere.
 
 Items are classified at read time by `DetectorRegistry` (`IClipDetector`s:
-url/email/color/path/code/image/text).
+url/github-pr/email/jira-issue/color/path/code/image/text).
+
+## Plugins (B2)
+Two contracts in `Clipwell.Protocol.Plugins`: `IClipDetector` (custom kinds, loaded by
+the **daemon**) and `IClipAction` (Ctrl+K palette actions, loaded by the **picker**),
+the latter via `IClipActionContext` (OpenUrl/OpenPath/SetClipboard/Notify) so actions
+stay UI-free. `PluginLoader.Load<T>(dir)` `Assembly.LoadFrom`s each DLL in the plugins
+dir (`<data dir>/plugins`, override `CLIPWELL_PLUGINS_DIR`) and instantiates concrete
+`T`s. Plugins reference `Clipwell.Protocol` with `Private="false"` (single DLL, host
+type identity). Built-ins ship in core; personal features → a private plugin. Example:
+`plugins/sample`. See ADR-0006 + `engineering/.../plugins.mdx`.
 
 ## Avalonia 12 gotchas
 - Clipboard: `DataObject`/`DataFormats` are obsolete → `DataTransfer`/`DataFormat`.

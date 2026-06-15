@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Build against the contract, but DON'T copy Clipwell.Protocol.dll into the
+         plugin output: the host already has it loaded, and a second copy would break
+         interface type identity. The plugin ships as a single DLL. -->
+    <ProjectReference Include="..\..\protocol\Clipwell.Protocol.csproj" Private="false" />
+  </ItemGroup>
+
+</Project>

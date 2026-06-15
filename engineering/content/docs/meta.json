@@ -1,4 +1,4 @@
 {
   "title": "Clipwell Engineering",
-  "pages": ["index", "architecture", "tech-stack", "adr"]
+  "pages": ["index", "architecture", "tech-stack", "plugins", "adr"]
 }

@@ -121,7 +121,8 @@ public sealed partial class MainViewModel : ObservableObject
     public void CloseQuickLook() => IsQuickLook = false;
 
     // ── Action palette (Ctrl+K) ──────────────────────────────────────────
-    private readonly ActionRegistry _actions = new();
+    // Built-in actions + any loaded from plugins (CLIPWELL_PLUGINS_DIR).
+    private readonly ActionRegistry _actions = new(PluginLoader.Load<IClipAction>());
     private List<ActionEntry> _applicableActions = [];
 
     [ObservableProperty]

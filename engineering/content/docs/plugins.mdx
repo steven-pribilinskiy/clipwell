@@ -1,0 +1,54 @@
+---
+title: Plugin host
+description: How Clipwell loads third-party detectors and actions.
+---
+
+Clipwell's typed-item and action systems are **plugin seams**. The public core ships
+the contracts and built-ins; anything bespoke (personal workflow integrations) loads
+from an external assembly at runtime — no core changes, no recompile.
+
+## The two contracts
+
+Both live in `Clipwell.Protocol.Plugins`:
+
+- **`IClipDetector`** — `Detect(ClipItem) → kind?`. Returns a custom kind string or
+  null. Runs in the **daemon**, which classifies items at read time.
+- **`IClipAction`** — `AppliesTo(item)` + `ExecuteAsync(item, IClipActionContext)`.
+  Shown in the picker's **Ctrl+K** palette and run in the **UI**. The context
+  (`OpenUrl` / `OpenPath` / `SetClipboardAsync` / `Notify`) keeps actions free of any
+  UI dependency, so the same action works in-core or from a plugin.
+
+## Loading model
+
+The key wrinkle: **detectors and actions run in different processes**. Clipwell is a
+headless daemon plus a thin picker, so the plugin host has two halves that scan the
+same folder:
+
+```
+plugins/                      ┌─ daemon  → PluginLoader.Load<IClipDetector>()
+  my-plugin.dll  ─────────────┤
+                              └─ picker  → PluginLoader.Load<IClipAction>()
+```
+
+`PluginLoader.Load<T>(dir)` (in `Clipwell.Protocol.Plugins`) `Assembly.LoadFrom`s
+every `*.dll` in the folder and instantiates each public, concrete `T` with a
+parameterless constructor. A plugin that throws on load is skipped — never fatal.
+
+Plugins resolve from `<data dir>/plugins` (override with `CLIPWELL_PLUGINS_DIR`).
+
+## Type identity
+
+A plugin references `Clipwell.Protocol` with `Private="false"` so it ships as a single
+DLL and **binds to the host's already-loaded `Clipwell.Protocol`**. Shipping a second
+copy of the protocol assembly would give the plugin's `IClipDetector` a different type
+identity than the host's, and it wouldn't match — so the build is deliberately set up
+to exclude it.
+
+## Public vs. private
+
+This split is what lets the public repo stay generic. Built-in detectors
+(url/email/color/path/code/image, plus github-pr/jira) and actions (open in browser,
+open path, copy, copy domain) ship in the core. Personal features — Claude-session
+detection and actions, Jira/GitHub integrations, terminal/repo helpers — live in a
+**separate private plugin** that loads through these same contracts, with no hardcoded
+paths in the public tree. See `plugins/sample` for a minimal working example.

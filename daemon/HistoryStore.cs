@@ -18,7 +18,9 @@ public sealed class HistoryStore : IDisposable
     private readonly string _settingsPath;
     private readonly SqliteConnection _conn;
     private readonly Lock _gate = new();
-    private readonly DetectorRegistry _detectors = new();
+    // Built-in detectors + any loaded from plugins (CLIPWELL_PLUGINS_DIR).
+    private readonly DetectorRegistry _detectors =
+        new(Clipwell.Protocol.Plugins.PluginLoader.Load<Clipwell.Protocol.Plugins.IClipDetector>());
     private readonly MetadataStore _meta;
 
     public HistoryStore(MetadataStore meta)
