@@ -15,12 +15,24 @@ public static class PerfLog
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Clipwell"),
         "perf.log");
 
+    /// <summary>Absolute path to perf.log (for the diagnostics window).</summary>
+    public static string FilePath => Path;
+
+    /// <summary>Truncate the perf log.</summary>
+    public static void Clear()
+    {
+        try { if (File.Exists(Path)) File.WriteAllText(Path, ""); } catch { /* ignore */ }
+    }
+
     public static void RecordShow(double milliseconds)
     {
         try
         {
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-            File.AppendAllText(Path, $"{DateTimeOffset.UtcNow:o}\tshow\t{milliseconds:F2}ms{Environment.NewLine}");
+            // Invariant culture so the decimal point is stable across locales (the
+            // diagnostics window parses with InvariantCulture).
+            var ms = milliseconds.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+            File.AppendAllText(Path, $"{DateTimeOffset.UtcNow:o}\tshow\t{ms}ms{Environment.NewLine}");
         }
         catch
         {

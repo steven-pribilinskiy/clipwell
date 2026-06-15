@@ -143,6 +143,21 @@ Open **Settings…** from the tray menu to tune:
   caption="Settings: appearance, view, grouping, metadata, retention, and position."
 />
 
+## Check performance & daemon health
+
+Open **Diagnostics…** from the tray menu to see the daemon status (and its database
+path) and the picker's **show-cycle timings** from `perf.log` — count, median, min,
+and max — so you can confirm the picker stays in its single‑digit / one‑frame range.
+Clear the log or refresh from the same window.
+
+<ThemedShot
+  name="diagnostics"
+  alt="The Clipwell diagnostics window showing daemon status and picker show-cycle timings"
+  width={802}
+  height={956}
+  caption="Diagnostics — daemon health and real show-cycle latencies."
+/>
+
 ## Keep it running in the background
 
 Clipwell lives in the system tray. Closing the picker window doesn't quit it — use

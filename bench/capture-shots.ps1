@@ -155,6 +155,26 @@ try {
         Write-Host "settings-$theme.png: $([Shot]::Grab('Clipwell Settings', (Join-Path $outDir "settings-$theme.png")))"
         Stop-Ui; Start-Sleep -Seconds 2
         $env:CLIPWELL_SHOW_SETTINGS = '0'
+
+        # Seed perf.log with realistic warm-show samples for the diagnostics shot
+        # (capture-mode shows don't record their own — they'd be unrepresentative).
+        $perf = Join-Path $dataDir 'perf.log'
+        $tp = (Get-Date).ToUniversalTime()
+        $samples = 13.9,15.1,14.2,16.0,13.5,17.2,14.8,15.6,13.2,16.4,14.1,15.0,14.6
+        $inv = [cultureinfo]::InvariantCulture
+        $lines = for ($k=0; $k -lt $samples.Count; $k++) {
+            $ts = $tp.AddSeconds(-($samples.Count-$k)*9).ToString("o")
+            "$ts`tshow`t$($samples[$k].ToString('F2',$inv))ms"
+        }
+        Set-Content -Path $perf -Value $lines -Encoding UTF8
+
+        # Diagnostics
+        $env:CLIPWELL_SHOW_DIAG = '1'
+        Start-Process -FilePath $uiExe -WindowStyle Normal -RedirectStandardOutput (Join-Path $dataDir "u4-$theme.out") -RedirectStandardError (Join-Path $dataDir "u4-$theme.err")
+        Start-Sleep -Seconds 7
+        Write-Host "diagnostics-$theme.png: $([Shot]::Grab('Clipwell Diagnostics', (Join-Path $outDir "diagnostics-$theme.png")))"
+        Stop-Ui; Start-Sleep -Seconds 2
+        $env:CLIPWELL_SHOW_DIAG = '0'
     }
 }
 finally {

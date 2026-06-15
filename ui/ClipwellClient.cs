@@ -27,6 +27,14 @@ public sealed class ClipwellClient
 
     private sealed record PageResponse(List<ClipItem> Items);
 
+    public sealed record HealthInfo(string? Status, string? Db, int Subscribers);
+
+    public async Task<HealthInfo?> GetHealthAsync()
+    {
+        try { return await _http.GetFromJsonAsync<HealthInfo>("/health"); }
+        catch { return null; }
+    }
+
     public async Task<IReadOnlyList<ClipItem>> GetPageAsync(int limit = 200, string? before = null)
     {
         var url = before is null

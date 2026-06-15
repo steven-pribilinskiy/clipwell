@@ -1,0 +1,48 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Clipwell.Ui.DiagnosticsWindow"
+        Title="Clipwell Diagnostics"
+        Width="520" Height="600"
+        WindowStartupLocation="CenterScreen"
+        CanResize="True">
+    <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" Padding="24">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Top" Text="Diagnostics" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,14" />
+
+            <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,14,0,0">
+                <TextBlock Grid.Column="0" Name="StatusText" FontSize="12" Opacity="0.7" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Name="RefreshButton" Content="Refresh" Padding="14,6" Margin="0,0,10,0" />
+                <Button Grid.Column="2" Name="ClearButton" Content="Clear perf log" Padding="14,6" Margin="0,0,10,0" />
+                <Button Grid.Column="3" Name="CloseButton" Content="Close" Padding="14,6" />
+            </Grid>
+
+            <ScrollViewer>
+                <StackPanel Spacing="18">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Daemon" FontWeight="Medium" />
+                        <TextBlock Name="DaemonText" FontSize="12.5"
+                                   FontFamily="Cascadia Code,Consolas,monospace" TextWrapping="Wrap" Opacity="0.85" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Picker show-cycle (perf.log)" FontWeight="Medium" />
+                        <TextBlock Name="PerfSummary" FontSize="12.5" Opacity="0.85" />
+                        <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                CornerRadius="8" Padding="10" Height="320">
+                            <ScrollViewer>
+                                <ItemsControl Name="PerfList">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" FontSize="12"
+                                                       FontFamily="Cascadia Code,Consolas,monospace" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
+</Window>

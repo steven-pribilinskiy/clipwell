@@ -148,7 +148,7 @@ public partial class MainWindow : Window
             SearchBox.Focus();
         }
         sw.Stop();
-        PerfLog.RecordShow(sw.Elapsed.TotalMilliseconds);
+        if (!CaptureMode) PerfLog.RecordShow(sw.Elapsed.TotalMilliseconds); // capture-mode timings are bogus
 
         if (!_initialized)
         {

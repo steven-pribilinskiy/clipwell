@@ -67,6 +67,8 @@ public partial class App : Application
             // without driving the tray menu. Same spirit as CLIPWELL_NO_AUTOHIDE.
             if (Environment.GetEnvironmentVariable("CLIPWELL_SHOW_SETTINGS") == "1")
                 Dispatcher.UIThread.Post(ShowSettings);
+            if (Environment.GetEnvironmentVariable("CLIPWELL_SHOW_DIAG") == "1")
+                Dispatcher.UIThread.Post(ShowDiagnostics);
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -90,10 +92,13 @@ public partial class App : Application
         show.Click += (_, _) => _window?.ShowPicker();
         var settings = new NativeMenuItem("Settings…");
         settings.Click += (_, _) => ShowSettings();
+        var diag = new NativeMenuItem("Diagnostics…");
+        diag.Click += (_, _) => ShowDiagnostics();
         var quit = new NativeMenuItem("Quit Clipwell");
         quit.Click += (_, _) => desktop.Shutdown();
         menu.Add(show);
         menu.Add(settings);
+        menu.Add(diag);
         menu.Add(new NativeMenuItemSeparator());
         menu.Add(quit);
 
@@ -122,6 +127,7 @@ public partial class App : Application
     }
 
     private SettingsWindow? _settingsWindow;
+    private DiagnosticsWindow? _diagWindow;
 
     private void ShowSettings()
     {
@@ -131,6 +137,16 @@ public partial class App : Application
             _settingsWindow.Show();
         }
         _settingsWindow.Activate();
+    }
+
+    private void ShowDiagnostics()
+    {
+        if (_diagWindow is null || !_diagWindow.IsVisible)
+        {
+            _diagWindow = new DiagnosticsWindow();
+            _diagWindow.Show();
+        }
+        _diagWindow.Activate();
     }
 
     private void SetUpHotkey()
