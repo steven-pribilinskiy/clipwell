@@ -69,6 +69,10 @@ public sealed class ClipRow : INotifyPropertyChanged
         }
     }
 
+    /// <summary>Set by the view-model when this row starts a new group (date/source).</summary>
+    public string? GroupHeader { get; set; }
+    public bool HasGroupHeader => !string.IsNullOrEmpty(GroupHeader);
+
     public bool IsPinned => Item.IsUserPinned;
     public bool IsSensitive => Item.IsSensitive;
     public string PinGlyph => Item.IsUserPinned ? "📌" : "";

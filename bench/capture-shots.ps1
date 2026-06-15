@@ -88,23 +88,23 @@ try {
     $imgPath = Join-Path $dataDir 'seed-img.png'
     $bmp.Save($imgPath, [System.Drawing.Imaging.ImageFormat]::Png); $bmp.Dispose()
 
-    # Seed items directly (oldest first → newest shows on top). sourceApp = "Tabby".
-    function Seed($text, $hasImage, $img) {
+    # Seed items directly (oldest first → newest shows on top), with varied source apps.
+    function Seed($text, $hasImage, $img, $src) {
         $script:seedIdx = ($script:seedIdx + 1)
         $ts = $script:t0.AddSeconds($script:seedIdx).ToString("o")
-        $body = @{ timestamp=$ts; text=$text; hasImage=[bool]$hasImage; imagePath=$img; sourceApp='Tabby' } | ConvertTo-Json
+        $body = @{ timestamp=$ts; text=$text; hasImage=[bool]$hasImage; imagePath=$img; sourceApp=$src } | ConvertTo-Json
         Invoke-RestMethod "$base/api/clipboard/_seed" -Method Post -ContentType 'application/json' -Body $body | Out-Null
     }
     $script:t0 = (Get-Date).ToUniversalTime(); $script:seedIdx = 0
-    Seed 'The quick brown fox jumps over the lazy dog.' $false $null
-    Seed 'const sum = (a, b) => a + b;' $false $null
-    Seed 'C:\Users\you\Documents\report.txt' $false $null
-    Seed 'PROJ-1234' $false $null
-    Seed '#3366ff' $false $null
-    Seed 'you@example.com' $false $null
-    Seed 'https://github.com/AvaloniaUI/Avalonia/pull/1234' $false $null
-    Seed 'https://avaloniaui.net' $false $null
-    Seed $null $true $imgPath
+    Seed 'The quick brown fox jumps over the lazy dog.' $false $null 'Notepad'
+    Seed 'const sum = (a, b) => a + b;' $false $null 'VS Code'
+    Seed 'C:\Users\you\Documents\report.txt' $false $null 'Explorer'
+    Seed 'PROJ-1234' $false $null 'Chrome'
+    Seed '#3366ff' $false $null 'Figma'
+    Seed 'you@example.com' $false $null 'Outlook'
+    Seed 'https://github.com/AvaloniaUI/Avalonia/pull/1234' $false $null 'Chrome'
+    Seed 'https://avaloniaui.net' $false $null 'Chrome'
+    Seed $null $true $imgPath 'Snipping Tool'
 
     # Pin the code snippet, flag the email as sensitive.
     $items = (Invoke-RestMethod "$base/api/clipboard?limit=50").items
@@ -131,6 +131,14 @@ try {
         Write-Host "detail-$theme.png: $([Shot]::Grab('Clipwell', (Join-Path $outDir "detail-$theme.png")))"
         Stop-Ui; Start-Sleep -Seconds 2
         $env:CLIPWELL_VIEW = 'compact'
+
+        # Grouped by source
+        $env:CLIPWELL_GROUP = 'source'
+        Start-Process -FilePath $uiExe -WindowStyle Normal -RedirectStandardOutput (Join-Path $dataDir "ug-$theme.out") -RedirectStandardError (Join-Path $dataDir "ug-$theme.err")
+        Start-Sleep -Seconds 7
+        Write-Host "grouped-$theme.png: $([Shot]::Grab('Clipwell', (Join-Path $outDir "grouped-$theme.png")))"
+        Stop-Ui; Start-Sleep -Seconds 2
+        $env:CLIPWELL_GROUP = ''
 
         # Quick Look overlay (Ctrl+Y)
         $env:CLIPWELL_QUICKLOOK = '1'

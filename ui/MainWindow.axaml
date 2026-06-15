@@ -22,18 +22,23 @@
 
             <!-- Filter tabs + type dropdown -->
             <Grid Grid.Row="1" Margin="0,10,0,0" ColumnDefinitions="*,Auto">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5">
                     <Button Content="All" Command="{Binding SetFilterCommand}" CommandParameter="All"
-                            Padding="12,4" CornerRadius="6" />
-                    <Button Content="📌 Pinned" Command="{Binding SetFilterCommand}" CommandParameter="Pinned"
-                            Padding="12,4" CornerRadius="6" />
-                    <Button Content="🔒 Sensitive" Command="{Binding SetFilterCommand}" CommandParameter="Sensitive"
-                            Padding="12,4" CornerRadius="6" />
+                            Padding="10,4" CornerRadius="6" />
+                    <Button Content="📌" ToolTip.Tip="Pinned"
+                            Command="{Binding SetFilterCommand}" CommandParameter="Pinned"
+                            Padding="9,4" CornerRadius="6" />
+                    <Button Content="🔒" ToolTip.Tip="Sensitive"
+                            Command="{Binding SetFilterCommand}" CommandParameter="Sensitive"
+                            Padding="9,4" CornerRadius="6" />
+                    <Button Content="{Binding ViewToggleLabel}" ToolTip.Tip="Compact / Detail view"
+                            Command="{Binding ToggleViewCommand}" Padding="9,4" CornerRadius="6" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                    <Button Content="{Binding ViewToggleLabel}" Command="{Binding ToggleViewCommand}"
-                            Padding="10,4" CornerRadius="6" />
-                    <ComboBox MinWidth="120"
+                    <ComboBox MinWidth="108"
+                              ItemsSource="{Binding GroupOptions}"
+                              SelectedItem="{Binding SelectedGroup, Mode=TwoWay}" />
+                    <ComboBox MinWidth="116"
                               ItemsSource="{Binding KindOptions}"
                               SelectedItem="{Binding SelectedKind, Mode=TwoWay}" />
                 </StackPanel>
@@ -51,8 +56,11 @@
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="vm:ClipRow">
-                                <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2"
-                                      ToolTip.Tip="{Binding FullText}" ToolTip.ShowDelay="600">
+                                <StackPanel ToolTip.Tip="{Binding FullText}" ToolTip.ShowDelay="600">
+                                  <TextBlock Text="{Binding GroupHeader}" IsVisible="{Binding HasGroupHeader}"
+                                             FontSize="11" FontWeight="SemiBold" Opacity="0.5"
+                                             Margin="2,8,0,2" />
+                                  <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2">
                                     <Panel Grid.Column="0" Width="24" Margin="0,0,10,0" VerticalAlignment="Top">
                                         <TextBlock Text="{Binding KindGlyph}" FontSize="15"
                                                    IsVisible="{Binding ShowGlyph}" Opacity="0.85" />
@@ -69,7 +77,8 @@
                                     </StackPanel>
                                     <TextBlock Grid.Column="2" Text="{Binding PinGlyph}"
                                                FontSize="13" VerticalAlignment="Top" Margin="8,0,0,0" />
-                                </Grid>
+                                  </Grid>
+                                </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>

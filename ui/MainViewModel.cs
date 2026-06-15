@@ -25,6 +25,12 @@ public sealed record KindOption(string Label, string Value)
     public override string ToString() => Label; // ComboBox display
 }
 
+/// <summary>A grouping option for the picker (none / date / source).</summary>
+public sealed record GroupOption(string Label, string Value)
+{
+    public override string ToString() => Label;
+}
+
 /// <summary>
 /// Backing model for the picker window: loads history from the daemon, keeps it
 /// live via the WebSocket, and exposes a search- and tab-filtered view.
@@ -65,6 +71,16 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private KindOption _selectedKind;
 
+    public IReadOnlyList<GroupOption> GroupOptions { get; } =
+    [
+        new("No grouping", "none"),
+        new("By date", "date"),
+        new("By source", "source"),
+    ];
+
+    [ObservableProperty]
+    private GroupOption _selectedGroup;
+
     [ObservableProperty]
     private bool _isRenaming;
 
@@ -78,7 +94,7 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private Bitmap? _previewImage;
 
-    public string ViewToggleLabel => IsDetail ? "▤ Compact" : "▦ Detail";
+    public string ViewToggleLabel => IsDetail ? "▤" : "▦";
     public bool PreviewHasImage => PreviewImage is not null;
     public bool PreviewHasText => PreviewImage is null && !string.IsNullOrEmpty(Selected?.FullText);
 
@@ -133,7 +149,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
-        _selectedKind = KindOptions[0]; // "All types"
+        _selectedKind = KindOptions[0];   // "All types"
+        _selectedGroup = GroupOptions[0]; // "No grouping"
     }
 
     public async Task InitializeAsync()
@@ -150,6 +167,7 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnSearchTextChanged(string value) => ApplyFilter();
     partial void OnFilterChanged(ClipFilter value) => ApplyFilter();
     partial void OnSelectedKindChanged(KindOption value) => ApplyFilter();
+    partial void OnSelectedGroupChanged(GroupOption value) => ApplyFilter();
 
     [RelayCommand]
     private void SetFilter(string filter) =>
@@ -240,8 +258,13 @@ public sealed partial class MainViewModel : ObservableObject
             _oldestLoaded = _all[^1].Timestamp;
             if (page.Count < PageSize) _allLoaded = true;
 
+            var group = SelectedGroup?.Value ?? "none";
             foreach (var item in fresh.Where(PassesFilter))
-                Items.Add(new ClipRow(item, _client));
+            {
+                var row = new ClipRow(item, _client);
+                AssignHeader(row, group);
+                Items.Add(row);
+            }
             Status = $"{Items.Count} of {_all.Count} items";
         }
         catch
@@ -268,19 +291,66 @@ public sealed partial class MainViewModel : ObservableObject
         return true;
     }
 
+    private string? _lastBucket;
+
     private void ApplyFilter()
     {
-        // Pinned items float to the top, otherwise newest-first order is preserved.
-        var ordered = _all.Where(PassesFilter).OrderByDescending(i => i.IsUserPinned);
+        var group = SelectedGroup?.Value ?? "none";
+        var filtered = _all.Where(PassesFilter);
+
+        // Date grouping keeps the store's newest-first order; source grouping sorts by
+        // app then time; otherwise pinned items float to the top.
+        IEnumerable<ClipItem> ordered = group switch
+        {
+            "source" => filtered.OrderBy(SourceBucket, StringComparer.OrdinalIgnoreCase)
+                                .ThenByDescending(i => i.Timestamp, StringComparer.Ordinal),
+            "date" => filtered,
+            _ => filtered.OrderByDescending(i => i.IsUserPinned),
+        };
 
         Items.Clear();
-        foreach (var item in ordered) Items.Add(new ClipRow(item, _client));
+        _lastBucket = null;
+        foreach (var item in ordered)
+        {
+            var row = new ClipRow(item, _client);
+            AssignHeader(row, group);
+            Items.Add(row);
+        }
         Selected = Items.FirstOrDefault();
 
         // Reflect the filtered view, not just the last reload (search filters live).
         Status = _all.Count == 0
             ? "No clipboard history yet"
             : $"{Items.Count} of {_all.Count} items";
+    }
+
+    private void AssignHeader(ClipRow row, string group)
+    {
+        if (group == "none") return;
+        var bucket = group == "source" ? SourceBucket(row.Item) : DateBucket(row.Item.Timestamp);
+        if (bucket != _lastBucket)
+        {
+            row.GroupHeader = bucket;
+            _lastBucket = bucket;
+        }
+    }
+
+    private static string SourceBucket(ClipItem i) =>
+        string.IsNullOrEmpty(i.SourceApp) ? "Unknown source" : i.SourceApp;
+
+    private static string DateBucket(string timestamp)
+    {
+        if (!DateTimeOffset.TryParse(timestamp, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.AssumeUniversal, out var ts))
+            return "Earlier";
+        var day = ts.LocalDateTime.Date;
+        var today = DateTime.Now.Date;
+        if (day == today) return "Today";
+        if (day == today.AddDays(-1)) return "Yesterday";
+        var delta = DateTime.Now - ts.LocalDateTime;
+        if (delta < TimeSpan.FromDays(7)) return "Previous 7 days";
+        if (delta < TimeSpan.FromDays(30)) return "Previous 30 days";
+        return "Earlier";
     }
 
     public void Dispose() => _cts.Cancel();

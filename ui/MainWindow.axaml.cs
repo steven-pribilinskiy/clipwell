@@ -56,6 +56,12 @@ public partial class MainWindow : Window
             _vm.IsDetail = true;
         if (Environment.GetEnvironmentVariable("CLIPWELL_QUICKLOOK") == "1")
             _vm.IsQuickLook = true;
+        var grp = Environment.GetEnvironmentVariable("CLIPWELL_GROUP");
+        if (!string.IsNullOrEmpty(grp))
+        {
+            var opt = System.Linq.Enumerable.FirstOrDefault(_vm.GroupOptions, g => g.Value == grp);
+            if (opt is not null) _vm.SelectedGroup = opt;
+        }
     }
 
     private ScrollViewer? _listScroll;
