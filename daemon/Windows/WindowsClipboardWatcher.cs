@@ -140,8 +140,51 @@ public sealed class WindowsClipboardWatcher : IClipboardWatcher
             HtmlContent = html,
             HasImage = imagePath is not null,
             ImagePath = imagePath,
+            SourceApp = ReadForegroundApp(),
             Formats = formats,
         });
+    }
+
+    // Best-effort friendly name of the app that was foreground when the clipboard
+    // changed — i.e. the app the user copied from. Returns null if it can't be
+    // resolved (or if it would attribute to Clipwell itself).
+    private static string? ReadForegroundApp()
+    {
+        try
+        {
+            var hwnd = GetForegroundWindow();
+            if (hwnd == IntPtr.Zero) return null;
+            _ = GetWindowThreadProcessId(hwnd, out var pid);
+            if (pid == 0) return null;
+
+            const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+            var h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+            if (h == IntPtr.Zero) return null;
+            try
+            {
+                var sb = new System.Text.StringBuilder(1024);
+                var cap = sb.Capacity;
+                if (!QueryFullProcessImageName(h, 0, sb, ref cap)) return null;
+                var path = sb.ToString();
+                if (string.IsNullOrEmpty(path)) return null;
+
+                var name = Path.GetFileNameWithoutExtension(path);
+                try
+                {
+                    var desc = System.Diagnostics.FileVersionInfo.GetVersionInfo(path).FileDescription;
+                    if (!string.IsNullOrWhiteSpace(desc)) name = desc.Trim();
+                }
+                catch { /* no version info — fall back to the exe name */ }
+
+                if (name.Contains("Clipwell", StringComparison.OrdinalIgnoreCase)) return null;
+                return name;
+            }
+            finally { CloseHandle(h); }
+        }
+        catch
+        {
+            return null; // never let source resolution break a capture
+        }
     }
 
     private string? ReadHtml()
@@ -344,4 +387,19 @@ public sealed class WindowsClipboardWatcher : IClipboardWatcher
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr GetModuleHandle(string? lpModuleName);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint access, bool inheritHandle, uint processId);
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool QueryFullProcessImageName(IntPtr hProcess, uint flags, System.Text.StringBuilder exeName, ref int size);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool CloseHandle(IntPtr hObject);
 }
