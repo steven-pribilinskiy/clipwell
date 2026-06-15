@@ -36,6 +36,10 @@ Default port **8787**, override with `CLIPWELL_URL`. CLI base URL override:
 - `GET  /api/clipboard/stream` (SSE), `GET /api/clipboard/ws` (WebSocket) — both
   emit `{ type:"clipboard.changed", timestamp, textLength }` on capture.
 - `GET  /openapi/v1.json` — spec (mirrored to `openapi/clipwell.v1.json`).
+- `POST /mcp` — MCP over Streamable HTTP/SSE, served in-process by the daemon
+  (`AddMcpServer().WithHttpTransport()`, `DaemonClipboardTools` hits the store
+  directly). Same four tools as the stdio server in `mcp/`. Not in the OpenAPI
+  spec — MCP is its own JSON-RPC protocol.
 
 ## Storage
 SQLite at `%APPDATA%\Roaming\Clipwell\history.db` (Windows) / `~/.config/Clipwell`

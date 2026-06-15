@@ -40,10 +40,23 @@ new WebSocket("ws://127.0.0.1:8787/api/clipboard/ws")
 
 ## MCP (AI agents)
 
-The `mcp/` project is a stdio MCP server exposing clipboard tools to clients like
-Claude Desktop / Claude Code: `clipboard_recent`, `clipboard_search`,
-`clipboard_get_text`, and `clipboard_clear`. Point the client at the built
-`Clipwell.Mcp` executable; it proxies to the running daemon.
+Clipwell speaks MCP two ways, with the same four tools — `clipboard_recent`,
+`clipboard_search`, `clipboard_get_text`, and `clipboard_clear`.
+
+**1. Over HTTP/SSE, served by the daemon** at `/mcp` (Streamable HTTP). No extra
+process — point an HTTP-capable MCP client straight at it:
+
+```json
+{
+  "mcpServers": {
+    "clipwell": { "url": "http://127.0.0.1:8787/mcp" }
+  }
+}
+```
+
+**2. Over stdio**, for clients that spawn a child process (e.g. Claude Desktop).
+The `mcp/` project is a small stdio server that proxies to the running daemon —
+point the client at the built `Clipwell.Mcp` executable:
 
 ```json
 {
@@ -52,6 +65,9 @@ Claude Desktop / Claude Code: `clipboard_recent`, `clipboard_search`,
   }
 }
 ```
+
+Both expose the identical tool surface; the HTTP one talks to the history store
+in-process, the stdio one proxies over REST.
 
 ## CLI
 

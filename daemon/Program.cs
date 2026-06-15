@@ -2,6 +2,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Clipwell.Daemon;
+using Clipwell.Daemon.Mcp;
 using Clipwell.Daemon.Windows;
 using Clipwell.Protocol;
 
@@ -24,9 +25,17 @@ builder.Services.AddSingleton<ClipboardHub>();
 builder.Services.AddSingleton<IClipboardWatcher>(sp =>
     ClipboardWatcherFactory.Create(sp.GetRequiredService<HistoryStore>().CacheDir));
 
+// MCP over HTTP/SSE, served in-process at /mcp (tools hit HistoryStore directly).
+// The stdio server in mcp/ remains for clients that spawn a child process.
+builder.Services
+    .AddMcpServer()
+    .WithHttpTransport()
+    .WithTools<DaemonClipboardTools>();
+
 var app = builder.Build();
 app.UseWebSockets();
 app.MapOpenApi("/openapi/v1.json"); // machine-readable API spec (feeds the docs site)
+app.MapMcp("/mcp"); // Streamable HTTP + SSE MCP endpoint
 
 var store = app.Services.GetRequiredService<HistoryStore>();
 var meta = app.Services.GetRequiredService<MetadataStore>();

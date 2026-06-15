@@ -27,7 +27,7 @@ const features = [
 const protocols = [
   { name: 'REST', desc: 'GET /api/clipboard, settings, image, delete, clear. OpenAPI spec included.' },
   { name: 'WebSocket / SSE', desc: 'A clipboard.changed event on every capture, pushed live to subscribers.' },
-  { name: 'MCP', desc: 'A stdio server with clipboard_recent / search / get_text / clear for Claude.' },
+  { name: 'MCP', desc: 'clipboard_recent / search / get_text / clear for AI agents — over HTTP/SSE at /mcp, or stdio.' },
 ];
 
 export default function HomePage() {
