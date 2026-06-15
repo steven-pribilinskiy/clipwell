@@ -85,6 +85,17 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ToggleView() => IsDetail = !IsDetail;
 
+    // ── Quick Look (Ctrl+Y) — fullscreen preview overlay ─────────────────
+    [ObservableProperty]
+    private bool _isQuickLook;
+
+    public void ToggleQuickLook()
+    {
+        if (Selected is not null) IsQuickLook = !IsQuickLook;
+    }
+
+    public void CloseQuickLook() => IsQuickLook = false;
+
     partial void OnIsDetailChanged(bool value) => OnPropertyChanged(nameof(ViewToggleLabel));
 
     partial void OnPreviewImageChanged(Bitmap? value)

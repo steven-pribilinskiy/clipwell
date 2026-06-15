@@ -124,6 +124,26 @@ app.MapPost("/api/clipboard/delete", (DeleteRequest req) =>
 app.MapPost("/api/clipboard/clear", () => Results.Ok(new { deleted = store.ClearAll() }))
     .WithName("ClearHistory").WithSummary("Delete all history.");
 
+// Dev-only seeding for the docs-capture scripts: insert items directly so capture
+// never has to touch the user's real clipboard. Gated by CLIPWELL_ALLOW_SEED.
+if (Environment.GetEnvironmentVariable("CLIPWELL_ALLOW_SEED") == "1")
+{
+    app.MapPost("/api/clipboard/_seed", (SeedRequest req) =>
+    {
+        store.Upsert(new StoreRow
+        {
+            Timestamp = string.IsNullOrEmpty(req.Timestamp) ? DateTimeOffset.UtcNow.ToString("o") : req.Timestamp,
+            TextContent = req.Text,
+            TextLength = req.Text?.Length ?? 0,
+            HasImage = req.HasImage,
+            ImagePath = req.ImagePath,
+            SourceApp = req.SourceApp,
+            Formats = req.HasImage ? ["image"] : req.Text is not null ? ["text"] : [],
+        });
+        return Results.Ok();
+    });
+}
+
 app.MapPost("/api/clipboard/pin", (PinRequest req) =>
 {
     if (string.IsNullOrEmpty(req.Timestamp)) return Results.BadRequest(new { error = "timestamp required" });
@@ -214,6 +234,7 @@ app.MapGet("/api/clipboard/ws", async (HttpContext ctx) =>
 
 app.Run();
 
+internal sealed record SeedRequest(string? Timestamp, string? Text, bool HasImage, string? ImagePath, string? SourceApp);
 internal sealed record DeleteRequest(string Timestamp);
 internal sealed record PinRequest(string Timestamp, bool Pinned);
 internal sealed record SensitiveRequest(string Timestamp, bool Sensitive);

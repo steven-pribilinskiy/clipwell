@@ -44,6 +44,7 @@ public partial class MainWindow : Window
         Deactivated += (_, _) => { if (AutoHide && IsVisible) Hide(); };
         RenameBox.KeyDown += OnRenameBoxKeyDown;
         ItemsList.AddHandler(ScrollViewer.ScrollChangedEvent, OnListScrollChanged);
+        QuickLookBackdrop.PointerPressed += (_, _) => _vm.CloseQuickLook();
         // Widen the window when the Detail preview pane is showing.
         _vm.PropertyChanged += (_, e) =>
         {
@@ -53,6 +54,8 @@ public partial class MainWindow : Window
         // Screenshot hook: start in Detail view for the detail-mode capture.
         if (Environment.GetEnvironmentVariable("CLIPWELL_VIEW") == "detail")
             _vm.IsDetail = true;
+        if (Environment.GetEnvironmentVariable("CLIPWELL_QUICKLOOK") == "1")
+            _vm.IsQuickLook = true;
     }
 
     private ScrollViewer? _listScroll;
@@ -156,7 +159,12 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.Escape:
-                Hide();
+                if (_vm.IsQuickLook) _vm.CloseQuickLook();
+                else Hide();
+                e.Handled = true;
+                break;
+            case Key.Y when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+                _vm.ToggleQuickLook();
                 e.Handled = true;
                 break;
             case Key.Enter:

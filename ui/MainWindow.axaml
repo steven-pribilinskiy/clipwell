@@ -51,7 +51,8 @@
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="vm:ClipRow">
-                                <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2">
+                                <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2"
+                                      ToolTip.Tip="{Binding FullText}" ToolTip.ShowDelay="600">
                                     <Panel Grid.Column="0" Width="24" Margin="0,0,10,0" VerticalAlignment="Top">
                                         <TextBlock Text="{Binding KindGlyph}" FontSize="15"
                                                    IsVisible="{Binding ShowGlyph}" Opacity="0.85" />
@@ -121,6 +122,36 @@
             <TextBlock Grid.Row="3" Margin="2,10,2,0"
                        Text="{Binding Status}"
                        FontSize="11" Opacity="0.5" />
+
+            <!-- Quick Look overlay (Ctrl+Y) — fullscreen preview of the selected item -->
+            <Border Grid.Row="0" Grid.RowSpan="4" ZIndex="100"
+                    Name="QuickLookBackdrop"
+                    IsVisible="{Binding IsQuickLook}"
+                    Background="#CC000000">
+                <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                        CornerRadius="10" Margin="36" Padding="20" MaxWidth="1100"
+                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <Grid RowDefinitions="Auto,*">
+                        <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,12">
+                            <TextBlock Text="{Binding Selected.Item.Kind}" FontWeight="SemiBold" FontSize="14" />
+                            <TextBlock Text="{Binding Selected.Meta}" FontSize="11" Opacity="0.6" />
+                        </StackPanel>
+                        <ScrollViewer Grid.Row="1">
+                            <Panel>
+                                <Image Source="{Binding PreviewImage}"
+                                       IsVisible="{Binding PreviewHasImage}"
+                                       Stretch="Uniform" StretchDirection="DownOnly"
+                                       HorizontalAlignment="Center" VerticalAlignment="Top" />
+                                <TextBlock Text="{Binding Selected.FullText}"
+                                           IsVisible="{Binding PreviewHasText}"
+                                           TextWrapping="Wrap"
+                                           FontFamily="Cascadia Code,Consolas,monospace"
+                                           FontSize="14" />
+                            </Panel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Border>
         </Grid>
     </Border>
 </Window>
