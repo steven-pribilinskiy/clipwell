@@ -150,7 +150,10 @@ public partial class MainWindow : Window
             await Clipboard.SetTextAsync(text);
         var target = _pasteTarget;
         Hide();
-        // Restore focus to the source app and paste the selection there.
-        if (target != 0) _paste?.PasteInto(target);
+        // Paste into the source app. On Windows this restores focus to `target`
+        // first; the Windows impl no-ops when target==0. On mac/Linux Hide() already
+        // returned focus, so target is unused (always 0) and the paste still fires.
+        if (target != 0 || !OperatingSystem.IsWindows())
+            _paste?.PasteInto(target);
     }
 }

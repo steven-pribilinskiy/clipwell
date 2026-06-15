@@ -39,6 +39,14 @@ public partial class App : Application
                 _paste = new WindowsPasteService();
                 _pointer = new WindowsPointerLocation();
             }
+            else if (OperatingSystem.IsLinux())
+            {
+                _paste = new LinuxPasteService();
+            }
+            else if (OperatingSystem.IsMacOS())
+            {
+                _paste = new MacPasteService();
+            }
             _window = new MainWindow(_paste, _pointer);
             SetUpTray(desktop);
             SetUpHotkey();
@@ -99,14 +107,20 @@ public partial class App : Application
 
     private void SetUpHotkey()
     {
-        if (!OperatingSystem.IsWindows()) return; // mac/Linux hotkeys: a later phase
-        _hotkey = new WindowsGlobalHotkey();
+        _hotkey = OperatingSystem.IsWindows() ? new WindowsGlobalHotkey()
+            : OperatingSystem.IsLinux() ? new LinuxGlobalHotkey()
+            : OperatingSystem.IsMacOS() ? new MacGlobalHotkey()
+            : null;
+        if (_hotkey is null) return;
+
         _hotkey.Pressed += () =>
         {
-            // Capture the source window NOW, before the picker steals focus.
+            // Capture the source window NOW, before the picker steals focus (Windows;
+            // a no-op on mac/Linux, where Hide() returns focus to the prior app).
             var target = _paste?.GetForegroundWindow() ?? 0;
             Dispatcher.UIThread.Post(() => _window?.ShowPicker(target));
         };
-        _hotkey.Register();
+        if (!_hotkey.Register())
+            _hotkey = null; // registration failed (e.g. Wayland / no perms) → tray-only
     }
 }

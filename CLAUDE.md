@@ -88,7 +88,19 @@ global hotkey (Alt+Shift+V on Windows; Win+V is OS-reserved). Background app
 appended to `perf.log` in the data dir. Measured (via `bench/run-bench.ps1`):
 ~170ms cold first show; **~16ms warm** hidden→shown cycle (≈ one 60Hz frame). The
 synchronous render itself is ~1ms; the rest is the native show/activate/focus. See
-ADR-0004. Per-OS global hotkey lives behind `IGlobalHotkey` (Windows done).
+ADR-0004. Per-OS global hotkey lives behind `IGlobalHotkey`; paste-into-source
+behind `IPasteService`:
+- **Windows** — `RegisterHotKey` (Alt+Shift+V) + `SendInput` Ctrl+V. Verified.
+- **Linux** — `LinuxGlobalHotkey` (`XGrabKey` on the X11 root, Alt+Shift+V) +
+  `LinuxPasteService` (`xdotool`/`wtype`). X11 only — no Wayland global grab.
+- **macOS** — `MacGlobalHotkey` (Carbon `RegisterEventHotKey`, Option+Shift+V) +
+  `MacPasteService` (CGEvent Cmd+V; needs Accessibility permission).
+
+The mac/Linux paths are **compile-checked in CI** (the cross-platform `dotnet build`)
+but their GUI behavior is **not yet verified on real hardware** — all interop is
+guarded so a failure degrades to tray-only rather than crashing. The Avalonia
+`TrayIcon` is cross-platform already (not OS-gated).
+
 Picker position is centered by default; the `OpenAtCursor` setting opens it at the
 mouse cursor (clamped to the screen) via `IPointerLocation` (Windows done) —
 positioning runs inside the show-cycle, so keep it cheap.

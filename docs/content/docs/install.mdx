@@ -36,8 +36,19 @@ The daemon watches the clipboard by polling the platform CLI, so install one:
 - **Linux (Wayland)** — `wl-clipboard` (`wl-paste`).
 - **Linux (X11)** — `xclip`.
 
-The global hotkey and tray on macOS/Linux are on the roadmap; the daemon, REST/WS,
-MCP, and CLI work today.
+The tray icon is cross‑platform (Avalonia). The **global hotkey** and
+**paste‑into‑the‑source‑app** are now implemented natively per OS:
+
+- **macOS** — hotkey is **Option+Shift+V** (Carbon `RegisterEventHotKey`); pasting
+  synthesizes Cmd+V and needs **Accessibility** permission (System Settings →
+  Privacy & Security → Accessibility). Without it, the item is still copied.
+- **Linux (X11)** — hotkey is **Alt+Shift+V** (`XGrabKey`); pasting uses `xdotool`
+  (install it for paste‑back). Under a pure **Wayland** session there's no global
+  key‑grab API, so the hotkey falls back to tray‑only.
+
+These native paths are exercised by CI's cross‑platform build; the GUI behavior is
+still being validated on real macOS/Linux hardware. If a hotkey can't register, the
+app keeps working from the tray.
 
 ## Data location
 

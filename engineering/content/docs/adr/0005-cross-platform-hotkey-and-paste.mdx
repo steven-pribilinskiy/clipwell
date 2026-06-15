@@ -1,0 +1,50 @@
+---
+title: "ADR-0005: Cross-platform global hotkey & paste"
+description: Architecture Decision Record
+---
+
+- Status: accepted
+- Date: 2026-06-15
+- Deciders: project owner
+
+## Context
+
+The picker reaches parity on Windows (global hotkey + paste-into-the-source-app),
+but the same behavior is needed on macOS and Linux. There is no portable API for
+either a process-wide hotkey or for synthesizing a paste keystroke — each OS has its
+own mechanism, and some (Wayland) deliberately have none. The development machine is
+Windows, so the non-Windows paths cannot be GUI-tested locally.
+
+## Decision
+
+- **Keep the existing seams.** `IGlobalHotkey` (registers a system-wide chord, raises
+  `Pressed`) and `IPasteService` (capture source window + paste into it) already
+  isolate the OS-specific bits. Add one implementation of each per OS, selected in
+  `App` by `OperatingSystem.Is*`.
+- **Linux** — `LinuxGlobalHotkey` uses X11 `XGrabKey` on the root window (Alt+Shift+V)
+  with an `XNextEvent` thread; `LinuxPasteService` shells out to `xdotool` (X11) or
+  `wtype` (Wayland). X11 only: a pure Wayland session has no global-grab API, so the
+  hotkey returns `false` and the app runs tray-only.
+- **macOS** — `MacGlobalHotkey` uses Carbon `RegisterEventHotKey` (Option+Shift+V),
+  dispatched on the NSApplication run loop Avalonia already drives; `MacPasteService`
+  posts a Cmd+V via CoreGraphics events (`CGEventPost`), which needs Accessibility
+  permission.
+- **Focus model differs by OS.** On Windows we capture the foreground `HWND` at
+  hotkey time and restore it before pasting. On macOS/Linux, hiding our window returns
+  focus to the previous app automatically, so the paste service ignores the target
+  and just synthesizes the shortcut.
+- **Degrade, never crash.** Every native call is guarded; a failed `Register()`
+  (missing libX11, Wayland, no permission) leaves the app fully usable from the tray.
+  The Avalonia `TrayIcon` is already cross-platform, so the tray needs no per-OS code.
+
+## Consequences
+
+- The mac/Linux implementations are **compile-checked in CI** (the cross-platform
+  `dotnet build` on macOS + Linux runners) but their **GUI behavior is not yet
+  verified on real hardware** — this is called out in the install docs and code
+  comments rather than claimed as done.
+- Wayland users get tray-only hotkey behavior until a portal-based path is added.
+- macOS paste is gated on a one-time Accessibility grant; without it the item is
+  copied and the user pastes manually.
+- Verification is the next step once a real Mac/Linux box (or a suitable VM) is
+  available; the daemon and Unix clipboard watcher are already covered by CI.
