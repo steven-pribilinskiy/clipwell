@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'engineering/**'
+      - '**/*.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'engineering/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    name: build + smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build (Release)
+        run: dotnet build clipwell.slnx -c Release
+
+      # Linux needs an X server + a clipboard CLI for the watcher round-trip.
+      - name: Install Linux clipboard tooling
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xvfb xclip
+
+      - name: Smoke (Linux, under Xvfb)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a bash scripts/ci-smoke.sh
+
+      - name: Smoke (macOS)
+        if: runner.os == 'macOS'
+        run: bash scripts/ci-smoke.sh
+
+      - name: Smoke (Windows)
+        if: runner.os == 'Windows'
+        run: pwsh -File scripts/ci-smoke.ps1

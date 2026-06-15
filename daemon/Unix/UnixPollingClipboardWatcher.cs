@@ -17,8 +17,8 @@ public enum UnixClipboardTool
 /// </summary>
 /// <remarks>
 /// Text-only for the first cut. Requires the relevant CLI to be installed
-/// (pbpaste ships with macOS; Linux needs wl-clipboard or xclip). Implemented but
-/// not yet exercised in CI — see ADR / Phase 1 notes.
+/// (pbpaste ships with macOS; Linux needs wl-clipboard or xclip). Smoke-tested on
+/// macOS and Linux in CI via a clipboard round-trip — see .github/workflows/ci.yml.
 /// </remarks>
 public sealed class UnixPollingClipboardWatcher(UnixClipboardTool tool) : IClipboardWatcher
 {

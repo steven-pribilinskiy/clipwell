@@ -63,7 +63,7 @@ from the old `clipboard-store.ts` so existing history files keep working.
   pure Win32 P/Invoke. Captures text (CF_UNICODETEXT), HTML ("HTML Format"), and
   images (CF_DIB → PNG in the cache dir).
 - `UnixPollingClipboardWatcher` — macOS/Linux, polls `pbpaste`/`wl-paste`/`xclip`
-  (text-only; not yet exercised in CI).
+  (text-only; smoke-tested on macOS + Linux CI via a clipboard round-trip).
 - `NullClipboardWatcher` — fallback so the daemon runs everywhere.
 
 Items are classified at read time by `DetectorRegistry` (`IClipDetector`s:
@@ -126,6 +126,15 @@ pwsh bench/run-bench.ps1        # measures REST latency + picker show-cycle
   and note why. Never let the warm-show latency leave single digits (ms) without a
   recorded, justified reason — it is the product's core promise.
 - Always run against an isolated `CLIPWELL_DATA_DIR`, never real history.
+
+## CI (cross-platform)
+`.github/workflows/ci.yml` builds `clipwell.slnx` and runs a daemon smoke test on
+**ubuntu / macOS / windows** runners. The smoke test (`scripts/ci-smoke.sh` for
+Unix, `scripts/ci-smoke.ps1` for Windows) starts the built daemon against an
+isolated DB, asserts `/health` + `/api/clipboard`, then does a real clipboard
+round-trip through the native CLI to exercise the OS watcher. Linux runs under
+`xvfb` with `xclip` installed. This is how the Unix watcher gets real coverage —
+the GUI bits (tray, global hotkey) are not yet cross-platform and aren't covered.
 
 ## Documentation sites
 Both sites are **light/dark themed with the OS preference as the default** (set on
