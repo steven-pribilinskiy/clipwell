@@ -163,14 +163,25 @@ try {
     foreach ($theme in 'light','dark') {
         $env:CLIPWELL_THEME = $theme
 
-        # ---- Picker ----
+        # ---- Picker (compact) ----
         $env:CLIPWELL_SHOW_SETTINGS = '0'
+        $env:CLIPWELL_VIEW = 'compact'
         Start-Process -FilePath $uiExe -WindowStyle Normal `
             -RedirectStandardOutput (Join-Path $dataDir "ui-$theme.out") -RedirectStandardError (Join-Path $dataDir "ui-$theme.err")
         Start-Sleep -Seconds 7
         $ok = [Shot]::Grab('Clipwell', (Join-Path $outDir "picker-$theme.png"))
         Write-Host "picker-$theme.png: $ok"
         Stop-Ui; Start-Sleep -Seconds 2
+
+        # ---- Picker (detail view) ----
+        $env:CLIPWELL_VIEW = 'detail'
+        Start-Process -FilePath $uiExe -WindowStyle Normal `
+            -RedirectStandardOutput (Join-Path $dataDir "uid-$theme.out") -RedirectStandardError (Join-Path $dataDir "uid-$theme.err")
+        Start-Sleep -Seconds 7
+        $okd = [Shot]::Grab('Clipwell', (Join-Path $outDir "detail-$theme.png"))
+        Write-Host "detail-$theme.png: $okd"
+        Stop-Ui; Start-Sleep -Seconds 2
+        $env:CLIPWELL_VIEW = 'compact'
 
         # ---- Settings ----
         $env:CLIPWELL_SHOW_SETTINGS = '1'

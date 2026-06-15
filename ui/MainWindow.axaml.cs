@@ -44,6 +44,15 @@ public partial class MainWindow : Window
         Deactivated += (_, _) => { if (AutoHide && IsVisible) Hide(); };
         RenameBox.KeyDown += OnRenameBoxKeyDown;
         ItemsList.AddHandler(ScrollViewer.ScrollChangedEvent, OnListScrollChanged);
+        // Widen the window when the Detail preview pane is showing.
+        _vm.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.IsDetail))
+                Width = _vm.IsDetail ? 900 : 560;
+        };
+        // Screenshot hook: start in Detail view for the detail-mode capture.
+        if (Environment.GetEnvironmentVariable("CLIPWELL_VIEW") == "detail")
+            _vm.IsDetail = true;
     }
 
     private ScrollViewer? _listScroll;

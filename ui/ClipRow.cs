@@ -100,6 +100,11 @@ public sealed class ClipRow : INotifyPropertyChanged
         }
     }
 
+    /// <summary>Full (untruncated) text for the Detail preview pane; masked if sensitive.</summary>
+    public string FullText => Item.IsSensitive
+        ? "•••••••••••  (sensitive)"
+        : Item.TextContent ?? "";
+
     public string Meta
     {
         get

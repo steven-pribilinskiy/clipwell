@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Clipwell.Protocol;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -69,6 +70,51 @@ public sealed partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _renameText = "";
+
+    // ── Detail view (split list + preview pane) ──────────────────────────
+    [ObservableProperty]
+    private bool _isDetail;
+
+    [ObservableProperty]
+    private Bitmap? _previewImage;
+
+    public string ViewToggleLabel => IsDetail ? "▤ Compact" : "▦ Detail";
+    public bool PreviewHasImage => PreviewImage is not null;
+    public bool PreviewHasText => PreviewImage is null && !string.IsNullOrEmpty(Selected?.FullText);
+
+    [RelayCommand]
+    private void ToggleView() => IsDetail = !IsDetail;
+
+    partial void OnIsDetailChanged(bool value) => OnPropertyChanged(nameof(ViewToggleLabel));
+
+    partial void OnPreviewImageChanged(Bitmap? value)
+    {
+        OnPropertyChanged(nameof(PreviewHasImage));
+        OnPropertyChanged(nameof(PreviewHasText));
+    }
+
+    partial void OnSelectedChanged(ClipRow? value)
+    {
+        PreviewImage = null;
+        OnPropertyChanged(nameof(PreviewHasText));
+        if (value?.Item is { HasImage: true, IsSensitive: false } item)
+            _ = LoadPreviewImageAsync(item.Timestamp);
+    }
+
+    private async Task LoadPreviewImageAsync(string timestamp)
+    {
+        var bytes = await _client.GetImageBytesAsync(timestamp);
+        if (bytes is null) return;
+        try
+        {
+            using var ms = new System.IO.MemoryStream(bytes);
+            var bmp = new Bitmap(ms); // full-res for the preview pane
+            // Ignore if the selection moved on while we were loading.
+            if (Selected?.Item.Timestamp != timestamp) return;
+            PreviewImage = bmp;
+        }
+        catch { /* undecodable */ }
+    }
 
     public ObservableCollection<ClipRow> Items { get; } = [];
 
