@@ -54,6 +54,9 @@ public sealed class ClipwellClient
     public async Task SensitiveAsync(string timestamp, bool sensitive) =>
         await _http.PostAsJsonAsync("/api/clipboard/sensitive", new { timestamp, sensitive });
 
+    public async Task RenameAsync(string timestamp, string? alias) =>
+        await _http.PostAsJsonAsync("/api/clipboard/rename", new { timestamp, alias });
+
     /// <summary>Absolute URL to an item's cached image (for thumbnails).</summary>
     public string ImageUrl(string timestamp) =>
         new Uri(_baseUri, $"/api/clipboard/image/{Uri.EscapeDataString(timestamp)}").ToString();

@@ -18,6 +18,12 @@ public enum ClipFilter
     Sensitive,
 }
 
+/// <summary>A selectable kind filter for the picker's type dropdown.</summary>
+public sealed record KindOption(string Label, string Value)
+{
+    public override string ToString() => Label; // ComboBox display
+}
+
 /// <summary>
 /// Backing model for the picker window: loads history from the daemon, keeps it
 /// live via the WebSocket, and exposes a search- and tab-filtered view.
@@ -40,9 +46,38 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private ClipFilter _filter = ClipFilter.All;
 
+    /// <summary>Type-filter options for the dropdown (label → kind id; "all" = no filter).</summary>
+    public IReadOnlyList<KindOption> KindOptions { get; } =
+    [
+        new("All types", "all"),
+        new("Text", "text"),
+        new("Link", "url"),
+        new("GitHub PR", "github-pr"),
+        new("Jira issue", "jira-issue"),
+        new("Email", "email"),
+        new("Color", "color"),
+        new("Path", "path"),
+        new("Code", "code"),
+        new("Image", "image"),
+    ];
+
+    [ObservableProperty]
+    private KindOption _selectedKind;
+
+    [ObservableProperty]
+    private bool _isRenaming;
+
+    [ObservableProperty]
+    private string _renameText = "";
+
     public ObservableCollection<ClipRow> Items { get; } = [];
 
     public ClipwellClient Client => _client;
+
+    public MainViewModel()
+    {
+        _selectedKind = KindOptions[0]; // "All types"
+    }
 
     public async Task InitializeAsync()
     {
@@ -57,6 +92,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
     partial void OnFilterChanged(ClipFilter value) => ApplyFilter();
+    partial void OnSelectedKindChanged(KindOption value) => ApplyFilter();
 
     [RelayCommand]
     private void SetFilter(string filter) =>
@@ -76,6 +112,28 @@ public sealed partial class MainViewModel : ObservableObject
         if (Selected is null) return;
         await _client.SensitiveAsync(Selected.Item.Timestamp, !Selected.Item.IsSensitive);
         await ReloadAsync();
+    }
+
+    /// <summary>Open the rename bar for the selected item, pre-filled with its alias.</summary>
+    public void BeginRename()
+    {
+        if (Selected is null) return;
+        RenameText = Selected.Item.Alias ?? "";
+        IsRenaming = true;
+    }
+
+    public void CancelRename() => IsRenaming = false;
+
+    [RelayCommand]
+    private async Task CommitRenameAsync()
+    {
+        if (Selected is not null)
+        {
+            var alias = string.IsNullOrWhiteSpace(RenameText) ? null : RenameText.Trim();
+            await _client.RenameAsync(Selected.Item.Timestamp, alias);
+            await ReloadAsync();
+        }
+        IsRenaming = false;
     }
 
     [RelayCommand]
@@ -110,6 +168,10 @@ public sealed partial class MainViewModel : ObservableObject
             ClipFilter.Sensitive => filtered.Where(i => i.IsSensitive),
             _ => filtered,
         };
+
+        var kind = SelectedKind?.Value ?? "all";
+        if (kind != "all")
+            filtered = filtered.Where(i => i.Kind == kind);
 
         if (!string.IsNullOrEmpty(q))
             filtered = filtered.Where(i =>

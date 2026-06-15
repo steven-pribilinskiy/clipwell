@@ -1,4 +1,5 @@
 using System;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Clipwell.Protocol;
@@ -15,6 +16,13 @@ public partial class SettingsWindow : Window
     public SettingsWindow()
     {
         InitializeComponent();
+        // Screenshot mode: off-screen + non-activating so capture never steals focus.
+        if (Environment.GetEnvironmentVariable("CLIPWELL_CAPTURE") == "1")
+        {
+            ShowActivated = false;
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            Position = new PixelPoint(-4000, -4000);
+        }
         Opened += OnOpened;
         CloseButton.Click += (_, _) => Close();
         SaveButton.Click += OnSave;

@@ -19,6 +19,7 @@ New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
 $env:CLIPWELL_DATA_DIR  = $dataDir
 $env:CLIPWELL_NO_SWEEP  = '1'
 $env:CLIPWELL_NO_AUTOHIDE = '1'      # keep windows visible for capture
+$env:CLIPWELL_CAPTURE = '1'          # off-screen + non-activating (never steals focus)
 $env:CLIPWELL_URL = $base
 $env:CLIPWELL_API = $base
 
@@ -98,8 +99,10 @@ try {
         'The quick brown fox jumps over the lazy dog.',
         'const sum = (a, b) => a + b;',
         'C:\Users\you\Documents\report.txt',
+        'PROJ-1234',
         '#3366ff',
         'you@example.com',
+        'https://github.com/AvaloniaUI/Avalonia/pull/1234',
         'https://avaloniaui.net'
     )
     # Set-Clipboard can transiently fail if another app holds the clipboard — retry.

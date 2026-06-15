@@ -126,7 +126,15 @@ or behavior change:
      before capturing — otherwise the user's live copies leak into the media. They also
      `PrintWindow` with `SetProcessDPIAware` so high-DPI windows aren't clipped.
    - Screenshot-only app hooks: `CLIPWELL_SHOW_SETTINGS=1` opens Settings on launch;
-     `CLIPWELL_NO_AUTOHIDE=1` keeps the picker visible.
+     `CLIPWELL_NO_AUTOHIDE=1` keeps the picker visible; **`CLIPWELL_CAPTURE=1`** shows
+     the window off-screen and non-activating so capture **never steals focus** or
+     pops a window over the user's work (PrintWindow still captures it). The
+     capture-shots script sets this.
+   - **Don't steal focus while the user is working.** `capture-shots.ps1` is
+     focus-safe (above). But `capture-clip.ps1` (drives keystrokes) and
+     `run-bench.ps1` (measures a real hotkey→show→activate cycle) *do* take focus —
+     only run those when the user is idle, or ask first. Don't auto-relaunch the
+     app in the foreground during dev.
 3. Update the **engineering docs** (`engineering/content/docs/`) when architecture,
    the API surface, or a decision changes — and write a new **ADR** for any decision.
 4. Update this **CLAUDE.md**, the **README**, and the **OpenAPI** spec if endpoints

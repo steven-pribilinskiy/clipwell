@@ -17,8 +17,10 @@ public sealed class DetectorRegistry
         var all = new List<IClipDetector>
         {
             new ImageDetector(),
+            new GitHubPrDetector(),
             new UrlDetector(),
             new EmailDetector(),
+            new JiraIssueDetector(),
             new ColorDetector(),
             new PathDetector(),
             new CodeDetector(),
@@ -44,6 +46,28 @@ internal sealed class ImageDetector : IClipDetector
     public string Id => "builtin.image";
     public int Priority => 0;
     public string? Detect(ClipItem item) => item.HasImage ? "image" : null;
+}
+
+internal sealed partial class GitHubPrDetector : IClipDetector
+{
+    public string Id => "builtin.github-pr";
+    public int Priority => 5; // before the generic URL detector
+    public string? Detect(ClipItem item) =>
+        item.TextContent is { } t && GitHubPrRegex().IsMatch(t.Trim()) ? "github-pr" : null;
+
+    [GeneratedRegex(@"^https?://github\.com/[^/\s]+/[^/\s]+/pull/\d+", RegexOptions.IgnoreCase)]
+    private static partial Regex GitHubPrRegex();
+}
+
+internal sealed partial class JiraIssueDetector : IClipDetector
+{
+    public string Id => "builtin.jira-issue";
+    public int Priority => 25;
+    public string? Detect(ClipItem item) =>
+        item.TextContent is { } t && JiraRegex().IsMatch(t.Trim()) ? "jira-issue" : null;
+
+    [GeneratedRegex(@"^[A-Z][A-Z0-9]+-\d+$")]
+    private static partial Regex JiraRegex();
 }
 
 internal sealed partial class UrlDetector : IClipDetector

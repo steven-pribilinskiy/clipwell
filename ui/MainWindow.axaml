@@ -20,15 +20,35 @@
                      PlaceholderText="Search clipboard history…"
                      FontSize="15" CornerRadius="8" Padding="10,8" />
 
-            <!-- Filter tabs -->
-            <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6" Margin="0,10,0,0">
-                <Button Content="All" Command="{Binding SetFilterCommand}" CommandParameter="All"
-                        Padding="12,4" CornerRadius="6" />
-                <Button Content="📌 Pinned" Command="{Binding SetFilterCommand}" CommandParameter="Pinned"
-                        Padding="12,4" CornerRadius="6" />
-                <Button Content="🔒 Sensitive" Command="{Binding SetFilterCommand}" CommandParameter="Sensitive"
-                        Padding="12,4" CornerRadius="6" />
-            </StackPanel>
+            <!-- Filter tabs + type dropdown -->
+            <Grid Grid.Row="1" Margin="0,10,0,0" ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6">
+                    <Button Content="All" Command="{Binding SetFilterCommand}" CommandParameter="All"
+                            Padding="12,4" CornerRadius="6" />
+                    <Button Content="📌 Pinned" Command="{Binding SetFilterCommand}" CommandParameter="Pinned"
+                            Padding="12,4" CornerRadius="6" />
+                    <Button Content="🔒 Sensitive" Command="{Binding SetFilterCommand}" CommandParameter="Sensitive"
+                            Padding="12,4" CornerRadius="6" />
+                </StackPanel>
+                <ComboBox Grid.Column="1" MinWidth="120" VerticalAlignment="Center"
+                          ItemsSource="{Binding KindOptions}"
+                          SelectedItem="{Binding SelectedKind, Mode=TwoWay}" />
+            </Grid>
+
+            <!-- Rename bar (F2) — overlays the top of the list area -->
+            <Border Grid.Row="2" Margin="0,12,0,0" ZIndex="10"
+                    VerticalAlignment="Top"
+                    IsVisible="{Binding IsRenaming}"
+                    Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                    BorderBrush="{DynamicResource SystemAccentColor}" BorderThickness="1"
+                    CornerRadius="8" Padding="10,8">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Rename:" VerticalAlignment="Center" Opacity="0.7" />
+                    <TextBox Name="RenameBox" Width="380"
+                             Text="{Binding RenameText, Mode=TwoWay}"
+                             PlaceholderText="alias (empty to clear)" />
+                </StackPanel>
+            </Border>
 
             <!-- History list -->
             <ListBox Grid.Row="2" Margin="0,12,0,0"

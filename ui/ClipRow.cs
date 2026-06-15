@@ -23,6 +23,15 @@ public sealed class ClipRow : INotifyPropertyChanged
         Item = item;
         if (item.HasImage && !item.IsSensitive && client is not null)
             _ = LoadThumbnailAsync(client);
+        else if (!item.IsSensitive && item.Kind is "url" or "github-pr")
+            _ = LoadFaviconAsync();
+    }
+
+    private async System.Threading.Tasks.Task LoadFaviconAsync()
+    {
+        var bmp = await FaviconLoader.GetAsync(Item.TextContent);
+        if (bmp is null) return;
+        await Dispatcher.UIThread.InvokeAsync(() => Thumbnail = bmp); // reuses the thumbnail slot
     }
 
     private Bitmap? _thumbnail;
@@ -66,6 +75,8 @@ public sealed class ClipRow : INotifyPropertyChanged
 
     public string KindGlyph => Item.Kind switch
     {
+        "github-pr" => "🔀",
+        "jira-issue" => "🎫",
         "url" => "🔗",
         "email" => "✉",
         "color" => "🎨",

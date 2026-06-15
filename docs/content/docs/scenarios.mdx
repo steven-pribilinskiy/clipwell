@@ -39,6 +39,8 @@ Every item is classified and shown with a glyph:
 | Glyph | Kind  | Example |
 |-------|-------|---------|
 | 🔗    | url   | `https://avaloniaui.net` |
+| 🔀    | github-pr | `https://github.com/org/repo/pull/123` |
+| 🎫    | jira-issue | `PROJ-1234` |
 | ✉     | email | `you@example.com` |
 | 🎨    | color | `#3366ff` |
 | 📁    | path  | `C:\Users\you\file.txt` |
@@ -47,8 +49,10 @@ Every item is classified and shown with a glyph:
 | 📄    | text  | anything else |
 
 Classification is done by pluggable detectors, so the set of kinds can be extended.
-Image items show a **thumbnail** in place of the glyph, so you can spot the right
-screenshot without opening it.
+**Image items show a thumbnail**, and **URLs show the site's favicon** (fetched
+directly over HTTPS — no third‑party favicon service) in place of the glyph.
+Each item also shows **which app it was copied from** ("Tabby · just now"),
+captured at copy time.
 
 ## Filter to what you need
 

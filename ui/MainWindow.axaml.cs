@@ -23,6 +23,12 @@ public partial class MainWindow : Window
     private static readonly bool AutoHide =
         Environment.GetEnvironmentVariable("CLIPWELL_NO_AUTOHIDE") is null;
 
+    // Screenshot mode: show the window off-screen and WITHOUT activating it, so the
+    // docs-capture scripts never steal focus or pop a window over the user's work.
+    // PrintWindow still captures an off-screen, unactivated window.
+    private static readonly bool CaptureMode =
+        Environment.GetEnvironmentVariable("CLIPWELL_CAPTURE") == "1";
+
     public MainWindow() : this(null) { }
 
     public MainWindow(IPasteService? paste, IPointerLocation? pointer = null)
@@ -30,10 +36,29 @@ public partial class MainWindow : Window
         _paste = paste;
         _pointer = pointer;
         InitializeComponent();
+        if (CaptureMode) ShowActivated = false; // never grab focus during capture
         DataContext = _vm;
         Closed += (_, _) => _vm.Dispose();
         ItemsList.DoubleTapped += (_, _) => _ = CopySelectedAndHideAsync();
         Deactivated += (_, _) => { if (AutoHide && IsVisible) Hide(); };
+        RenameBox.KeyDown += OnRenameBoxKeyDown;
+    }
+
+    private void OnRenameBoxKeyDown(object? sender, KeyEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case Key.Enter:
+                _vm.CommitRenameCommand.Execute(null);
+                SearchBox.Focus();
+                e.Handled = true;
+                break;
+            case Key.Escape:
+                _vm.CancelRename();
+                SearchBox.Focus();
+                e.Handled = true;
+                break;
+        }
     }
 
     /// <summary>Refresh the cached open-at-cursor preference from the daemon.</summary>
@@ -75,10 +100,20 @@ public partial class MainWindow : Window
         _pasteTarget = pasteTarget;
         var sw = Stopwatch.StartNew();
         _vm.SearchText = "";
-        PositionForShow();
-        Show();
-        Activate();
-        SearchBox.Focus();
+        if (CaptureMode)
+        {
+            // Off-screen + non-activating: visible to PrintWindow, invisible to the user.
+            WindowStartupLocation = WindowStartupLocation.Manual;
+            Position = new PixelPoint(-4000, -4000);
+            Show();
+        }
+        else
+        {
+            PositionForShow();
+            Show();
+            Activate();
+            SearchBox.Focus();
+        }
         sw.Stop();
         PerfLog.RecordShow(sw.Elapsed.TotalMilliseconds);
 
@@ -112,6 +147,12 @@ public partial class MainWindow : Window
                 break;
             case Key.Delete:
                 _vm.DeleteSelectedCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.F2:
+                _vm.BeginRename();
+                RenameBox.Focus();
+                RenameBox.SelectAll();
                 e.Handled = true;
                 break;
             case Key.P when e.KeyModifiers.HasFlag(KeyModifiers.Control):
