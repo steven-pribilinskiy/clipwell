@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
+using Avalonia.VisualTree;
 using Clipwell.Ui.Platform;
 
 namespace Clipwell.Ui;
@@ -42,6 +43,18 @@ public partial class MainWindow : Window
         ItemsList.DoubleTapped += (_, _) => _ = CopySelectedAndHideAsync();
         Deactivated += (_, _) => { if (AutoHide && IsVisible) Hide(); };
         RenameBox.KeyDown += OnRenameBoxKeyDown;
+        ItemsList.AddHandler(ScrollViewer.ScrollChangedEvent, OnListScrollChanged);
+    }
+
+    private ScrollViewer? _listScroll;
+
+    // Infinite scroll: when the list nears its bottom, fetch the next older page.
+    private void OnListScrollChanged(object? sender, ScrollChangedEventArgs e)
+    {
+        _listScroll ??= ItemsList.FindDescendantOfType<ScrollViewer>();
+        if (_listScroll is null) return;
+        var remaining = _listScroll.Extent.Height - (_listScroll.Offset.Y + _listScroll.Viewport.Height);
+        if (remaining < 400) _ = _vm.LoadMoreAsync();
     }
 
     private void OnRenameBoxKeyDown(object? sender, KeyEventArgs e)

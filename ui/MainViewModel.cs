@@ -144,11 +144,18 @@ public sealed partial class MainViewModel : ObservableObject
         await ReloadAsync();
     }
 
+    private const int PageSize = 100;
+    private string? _oldestLoaded;
+    private bool _allLoaded;
+    private bool _loadingMore;
+
     private async Task ReloadAsync()
     {
         try
         {
-            _all = [.. await _client.GetPageAsync(200)];
+            _all = [.. await _client.GetPageAsync(PageSize)];
+            _oldestLoaded = _all.Count > 0 ? _all[^1].Timestamp : null;
+            _allLoaded = _all.Count < PageSize;
             ApplyFilter();
         }
         catch
@@ -157,29 +164,57 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Fetches the next older page and appends matching rows in place (preserving
+    /// scroll position). Called by the picker when the list nears its bottom.
+    /// </summary>
+    public async Task LoadMoreAsync()
+    {
+        if (_loadingMore || _allLoaded || _oldestLoaded is null) return;
+        _loadingMore = true;
+        try
+        {
+            var page = await _client.GetPageAsync(PageSize, _oldestLoaded);
+            if (page.Count == 0) { _allLoaded = true; return; }
+
+            var seen = _all.Select(i => i.Timestamp).ToHashSet();
+            var fresh = page.Where(i => seen.Add(i.Timestamp)).ToList();
+            _all.AddRange(fresh);
+            _oldestLoaded = _all[^1].Timestamp;
+            if (page.Count < PageSize) _allLoaded = true;
+
+            foreach (var item in fresh.Where(PassesFilter))
+                Items.Add(new ClipRow(item, _client));
+            Status = $"{Items.Count} of {_all.Count} items";
+        }
+        catch
+        {
+            // network blip — try again on the next scroll
+        }
+        finally
+        {
+            _loadingMore = false;
+        }
+    }
+
+    private bool PassesFilter(ClipItem i)
+    {
+        if (Filter == ClipFilter.Pinned && !i.IsUserPinned) return false;
+        if (Filter == ClipFilter.Sensitive && !i.IsSensitive) return false;
+        var kind = SelectedKind?.Value ?? "all";
+        if (kind != "all" && i.Kind != kind) return false;
+        var q = SearchText.Trim();
+        if (!string.IsNullOrEmpty(q) &&
+            !(i.TextContent?.Contains(q, StringComparison.OrdinalIgnoreCase) == true ||
+              i.Alias?.Contains(q, StringComparison.OrdinalIgnoreCase) == true))
+            return false;
+        return true;
+    }
+
     private void ApplyFilter()
     {
-        var q = SearchText.Trim();
-        IEnumerable<ClipItem> filtered = _all;
-
-        filtered = Filter switch
-        {
-            ClipFilter.Pinned => filtered.Where(i => i.IsUserPinned),
-            ClipFilter.Sensitive => filtered.Where(i => i.IsSensitive),
-            _ => filtered,
-        };
-
-        var kind = SelectedKind?.Value ?? "all";
-        if (kind != "all")
-            filtered = filtered.Where(i => i.Kind == kind);
-
-        if (!string.IsNullOrEmpty(q))
-            filtered = filtered.Where(i =>
-                i.TextContent?.Contains(q, StringComparison.OrdinalIgnoreCase) == true ||
-                i.Alias?.Contains(q, StringComparison.OrdinalIgnoreCase) == true);
-
         // Pinned items float to the top, otherwise newest-first order is preserved.
-        var ordered = filtered.OrderByDescending(i => i.IsUserPinned);
+        var ordered = _all.Where(PassesFilter).OrderByDescending(i => i.IsUserPinned);
 
         Items.Clear();
         foreach (var item in ordered) Items.Add(new ClipRow(item, _client));
