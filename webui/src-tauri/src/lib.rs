@@ -133,8 +133,9 @@ pub fn run() {
                 let _ = app.global_shortcut().register(sc);
             }
 
-            // Show once on launch so the app is discoverable.
-            show_picker(app.handle());
+            // Start hidden (the window is visible:false in tauri.conf). The picker is
+            // summoned by the global hotkey or the tray — never popped up on launch,
+            // so it can't sit on top of the user's work uninvited.
             Ok(())
         })
         .on_window_event(|window, event| {

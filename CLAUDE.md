@@ -180,7 +180,14 @@ Second front-end (additive; the Avalonia `ui/` stays). Same daemon, full parity.
   paste-back; commands `paste_and_hide`/`hide_window`/`open_external`/`set_hotkey`.
   Frontend bridges via `__TAURI_INTERNALS__.invoke` (`src/lib/platform.ts`), no-op in
   a browser. **Needs Rust + MSVC C++ Build Tools (link.exe) on Windows** — not the
-  .NET SDK. Plugin detectors flow through (daemon-side); plugin actions are .NET-only.
+  .NET SDK (both now installed; `cargo build` works). Plugin detectors flow through
+  (daemon-side); plugin actions are .NET-only.
+  - The window **starts hidden** (summon via hotkey/tray) and **hides on blur** — so
+    it never sits on top of the user's work. `CLIPWELL_NO_AUTOHIDE=1` disables
+    hide-on-blur for screenshots ONLY; never run the app with it during normal use or
+    the always-on-top window gets stuck on screen.
+  - Verified on Windows: `cargo build` + `bun run tauri dev` launch a frameless window
+    that loads the SPA and connects to the daemon (both themes captured).
 - Don't add `webui/` to `clipwell.slnx`. `dist`, `node_modules`, `src-tauri/target`
   are gitignored.
 
