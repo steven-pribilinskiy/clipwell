@@ -8,8 +8,9 @@ export default defineConfig({
   base: "./",
   plugins: [solid(), tailwindcss()],
   build: {
-    // Output straight into the daemon's static dir so it serves the SPA at /app.
-    outDir: "../daemon/wwwroot/app",
+    // Single output consumed by both the daemon (serves it at /app — it resolves
+    // <repo>/webui/dist) and Tauri (frontendDist: ../dist).
+    outDir: "dist",
     emptyOutDir: true,
     target: "esnext",
   },

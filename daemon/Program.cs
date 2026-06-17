@@ -45,11 +45,17 @@ var app = builder.Build();
 app.UseWebSockets();
 app.UseCors("webui");
 
-// Serve the built web UI (webui/dist → wwwroot/app, or CLIPWELL_WEBUI_DIR) at /app,
-// so the same SPA opens in any browser at http://127.0.0.1:8787/app. Only if present.
-var webuiDir = Environment.GetEnvironmentVariable("CLIPWELL_WEBUI_DIR")
-    ?? Path.Combine(AppContext.BaseDirectory, "wwwroot", "app");
-if (Directory.Exists(webuiDir))
+// Serve the built web UI at /app so the same SPA opens in any browser at
+// http://127.0.0.1:8787/app. Resolve from: CLIPWELL_WEBUI_DIR, the published
+// wwwroot/app, or the dev build at <repo>/webui/dist. Only mounted if found.
+var webuiCandidates = new[]
+{
+    Environment.GetEnvironmentVariable("CLIPWELL_WEBUI_DIR"),
+    Path.Combine(AppContext.BaseDirectory, "wwwroot", "app"),
+    Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "webui", "dist"),
+};
+var webuiDir = webuiCandidates.FirstOrDefault(d => !string.IsNullOrEmpty(d) && Directory.Exists(d));
+if (webuiDir is not null)
 {
     var fp = new PhysicalFileProvider(Path.GetFullPath(webuiDir));
     // Redirect exactly "/app" → "/app/" (a middleware, not a route, so it doesn't

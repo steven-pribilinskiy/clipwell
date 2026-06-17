@@ -2,7 +2,7 @@
 // browser these degrade gracefully (no-ops), so the same SPA runs everywhere.
 
 interface TauriInternals {
-  core?: { invoke?: (cmd: string, args?: unknown) => Promise<unknown> };
+  invoke?: (cmd: string, args?: unknown) => Promise<unknown>;
 }
 
 function tauri(): TauriInternals | undefined {
@@ -10,12 +10,12 @@ function tauri(): TauriInternals | undefined {
 }
 
 function isTauri(): boolean {
-  return tauri()?.core?.invoke !== undefined;
+  return tauri()?.invoke !== undefined;
 }
 
 async function invoke(cmd: string, args?: unknown): Promise<void> {
   try {
-    await tauri()?.core?.invoke?.(cmd, args);
+    await tauri()?.invoke?.(cmd, args);
   } catch {
     /* command missing or failed — ignore */
   }
@@ -29,6 +29,11 @@ export async function paste(): Promise<void> {
 /** Hide the picker window (Tauri only; in a browser this is a no-op). */
 export async function hide(): Promise<void> {
   if (isTauri()) await invoke("hide_window");
+}
+
+/** Re-register the global hotkey from settings (Tauri only). */
+export async function setHotkey(chord: string): Promise<void> {
+  if (isTauri()) await invoke("set_hotkey", { chord });
 }
 
 /** Open a URL/path with the OS default handler (Tauri opener; browser falls back). */

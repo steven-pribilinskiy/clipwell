@@ -1,7 +1,7 @@
 import { createMemo, createRoot, createSignal } from "solid-js";
 import * as api from "./lib/client";
 import { dateBucket, sourceBucket } from "./lib/format";
-import { paste as platformPaste } from "./lib/platform";
+import { paste as platformPaste, setHotkey as platformSetHotkey } from "./lib/platform";
 import type { ClipboardSettings, ClipItem, GroupMode, Tab, ViewMode } from "./types";
 
 const PAGE = 100;
@@ -139,6 +139,7 @@ function makeStore() {
       applyTheme(s.theme);
       setView(s.defaultView);
       setGroup(s.defaultGroup);
+      void platformSetHotkey(s.hotkey);
     } catch {
       applyTheme("system");
     }
@@ -209,6 +210,7 @@ function makeStore() {
     await api.saveSettings(s);
     setSettings(s);
     applyTheme(s.theme);
+    void platformSetHotkey(s.hotkey);
   }
 
   return {
