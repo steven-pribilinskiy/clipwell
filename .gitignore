@@ -13,6 +13,13 @@ publish/
 node_modules/
 .next/
 out/
+dist/
+
+# Web UI build output served by the daemon (built from webui/)
+daemon/wwwroot/
+
+# Rust / Tauri
+target/
 
 # OS
 .DS_Store

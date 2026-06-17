@@ -8,7 +8,8 @@ export default defineConfig({
   base: "./",
   plugins: [solid(), tailwindcss()],
   build: {
-    outDir: "dist",
+    // Output straight into the daemon's static dir so it serves the SPA at /app.
+    outDir: "../daemon/wwwroot/app",
     emptyOutDir: true,
     target: "esnext",
   },

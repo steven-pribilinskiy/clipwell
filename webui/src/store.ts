@@ -38,7 +38,7 @@ function makeStore() {
   const [view, setView] = createSignal<ViewMode>("compact");
   const [selectedTs, setSelectedTs] = createSignal<string | null>(null);
   const [settings, setSettings] = createSignal<ClipboardSettings>(DEFAULT_SETTINGS);
-  const [status, setStatus] = createSignal("Connecting to daemon…");
+  const [error, setError] = createSignal<string | null>("Connecting to daemon…");
   const [quickLook, setQuickLook] = createSignal(false);
   const [actionsOpen, setActionsOpen] = createSignal(false);
   const [renameTs, setRenameTs] = createSignal<string | null>(null);
@@ -89,11 +89,14 @@ function makeStore() {
 
   const selected = createMemo(() => items().find((i) => i.timestamp === selectedTs()) ?? null);
 
-  function refreshStatus(count: number) {
-    setStatus(
-      items().length === 0 ? "No clipboard history yet" : `${count} of ${items().length} items`,
-    );
-  }
+  // Derived so it tracks the filtered view live (search/filter/group), not just reloads.
+  const status = createMemo(
+    () =>
+      error() ??
+      (items().length === 0
+        ? "No clipboard history yet"
+        : `${rows().length} of ${items().length} items`),
+  );
 
   async function reload() {
     try {
@@ -104,9 +107,9 @@ function makeStore() {
       if (!selectedTs() || !page.some((i) => i.timestamp === selectedTs())) {
         setSelectedTs(rows()[0]?.item.timestamp ?? null);
       }
-      refreshStatus(rows().length);
+      setError(null);
     } catch {
-      setStatus("Daemon unreachable — is it running?");
+      setError("Daemon unreachable — is it running?");
     }
   }
 
@@ -124,7 +127,6 @@ function makeStore() {
       setItems([...items(), ...fresh]);
       oldest = items().at(-1)?.timestamp ?? oldest;
       if (page.length < PAGE) allLoaded = true;
-      refreshStatus(rows().length);
     } finally {
       loadingMore = false;
     }

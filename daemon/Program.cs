@@ -5,6 +5,7 @@ using Clipwell.Daemon;
 using Clipwell.Daemon.Mcp;
 using Clipwell.Daemon.Windows;
 using Clipwell.Protocol;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,14 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 });
 
 builder.Services.AddOpenApi("v1");
+
+// Loopback-only CORS so the web UI (Tauri webview, vite dev, or any local browser)
+// can fetch the JSON API cross-origin. Same-origin (the daemon serving /app) needs
+// no CORS; this covers tauri://localhost, http(s)://tauri.localhost, and localhost:*.
+builder.Services.AddCors(o => o.AddPolicy("webui", p => p
+    .SetIsOriginAllowed(IsLocalOrigin)
+    .AllowAnyHeader()
+    .AllowAnyMethod()));
 
 builder.Services.AddSingleton<MetadataStore>();
 builder.Services.AddSingleton<HistoryStore>();
@@ -34,6 +43,30 @@ builder.Services
 
 var app = builder.Build();
 app.UseWebSockets();
+app.UseCors("webui");
+
+// Serve the built web UI (webui/dist → wwwroot/app, or CLIPWELL_WEBUI_DIR) at /app,
+// so the same SPA opens in any browser at http://127.0.0.1:8787/app. Only if present.
+var webuiDir = Environment.GetEnvironmentVariable("CLIPWELL_WEBUI_DIR")
+    ?? Path.Combine(AppContext.BaseDirectory, "wwwroot", "app");
+if (Directory.Exists(webuiDir))
+{
+    var fp = new PhysicalFileProvider(Path.GetFullPath(webuiDir));
+    // Redirect exactly "/app" → "/app/" (a middleware, not a route, so it doesn't
+    // also capture "/app/" and loop), then serve the SPA's default + static files.
+    app.Use(async (ctx, next) =>
+    {
+        if (ctx.Request.Path == "/app")
+        {
+            ctx.Response.Redirect("/app/");
+            return;
+        }
+        await next();
+    });
+    app.UseDefaultFiles(new DefaultFilesOptions { FileProvider = fp, RequestPath = "/app" });
+    app.UseStaticFiles(new StaticFileOptions { FileProvider = fp, RequestPath = "/app" });
+}
+
 app.MapOpenApi("/openapi/v1.json"); // machine-readable API spec (feeds the docs site)
 app.MapMcp("/mcp"); // Streamable HTTP + SSE MCP endpoint
 
@@ -233,6 +266,15 @@ app.MapGet("/api/clipboard/ws", async (HttpContext ctx) =>
 });
 
 app.Run();
+
+// Allow only local web-UI origins: loopback (127.0.0.1 / ::1 / localhost, any port)
+// and the Tauri webview origins.
+static bool IsLocalOrigin(string origin)
+{
+    if (origin is "tauri://localhost" or "http://tauri.localhost" or "https://tauri.localhost")
+        return true;
+    return Uri.TryCreate(origin, UriKind.Absolute, out var u) && u.IsLoopback;
+}
 
 internal sealed record SeedRequest(string? Timestamp, string? Text, bool HasImage, string? ImagePath, string? SourceApp);
 internal sealed record DeleteRequest(string Timestamp);
