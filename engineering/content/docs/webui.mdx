@@ -1,0 +1,52 @@
+---
+title: Web UI architecture
+description: How the Tauri + Solid web client reuses the daemon.
+---
+
+The web UI (`webui/`) is a second front-end that proves the daemon-as-API design: it
+shares **zero code** with the Avalonia picker, yet reaches feature parity by speaking
+the same REST + WebSocket surface (mirroring `ui/ClipwellClient.cs` in `src/lib/client.ts`).
+
+## One SPA, two hosts
+
+The same built bundle runs in two places:
+
+- **In a browser**, served by the daemon at `/app` (same-origin → no CORS needed).
+- **In a Tauri webview** (`tauri://localhost`), as a desktop app.
+
+`API_BASE` resolves to the page origin when served from `:8787`, else the default
+daemon URL. Because it uses plain `fetch` + native `WebSocket`, nothing ties the UI to
+Tauri — the desktop‑only bits live behind a small shim (`src/lib/platform.ts`) that
+calls `__TAURI_INTERNALS__.invoke` when present and no‑ops in a browser.
+
+## Backend changes — minimal, additive
+
+The daemon gained exactly two things (`daemon/Program.cs`), no endpoint changes:
+
+- **Loopback CORS** (`AddCors`/`UseCors`) allowing only loopback + `tauri://` origins,
+  so the webview and any local browser can call the JSON API cross-origin.
+- **Static SPA hosting** at `/app` (`UseDefaultFiles`/`UseStaticFiles`), resolving the
+  bundle from `CLIPWELL_WEBUI_DIR`, the published `wwwroot/app`, or the dev `webui/dist`.
+
+## The Tauri shell
+
+`src-tauri` (Rust) provides what a browser can't: a global hotkey
+(`plugin-global-shortcut` → show + focus), a tray icon, single-instance, hide-on-blur,
+and **paste-into-the-source-app** via the `enigo` crate (hide → let focus return →
+synthesize Ctrl/Cmd+V). The frontend re-registers the hotkey from settings through a
+`set_hotkey` command, so it tracks the same `ClipboardSettings.Hotkey` the Avalonia UI uses.
+
+## Plugins: detectors vs. actions
+
+A subtlety of a second runtime: plugin **detectors** run in the **daemon**, so the web
+UI receives their custom `kind`s for free over the API. Plugin **actions**, however, are
+.NET assemblies loaded by the Avalonia UI — they don't load in a web runtime. The web UI
+therefore reimplements the built-in actions in TypeScript; a JS-plugin mechanism for web
+actions is future work.
+
+## Toolchain
+
+Solid + Vite + Tailwind v4, built with **Bun**; **TypeScript 7** (`tsgo`) for
+type-checking only (Vite/esbuild does the transform); **Biome** + **knip** as quality
+gates (run in CI). The Tauri desktop build additionally needs Rust + the platform's
+webview build tools. See ADR-0007.

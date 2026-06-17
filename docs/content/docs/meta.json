@@ -1,4 +1,4 @@
 {
   "title": "Clipwell",
-  "pages": ["index", "install", "scenarios", "integrations"]
+  "pages": ["index", "install", "scenarios", "webui", "integrations"]
 }

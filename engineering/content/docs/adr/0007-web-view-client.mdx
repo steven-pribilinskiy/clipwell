@@ -1,0 +1,42 @@
+---
+title: "ADR-0007: Web-view client (Tauri + Solid)"
+description: Architecture Decision Record
+---
+
+- Status: accepted
+- Date: 2026-06-17
+- Deciders: project owner
+
+## Context
+
+The project wanted a second, OS-independent UI on a modern web stack, in addition to
+the native Avalonia picker — wrapped as a desktop app and also usable in a plain
+browser, reusing the existing daemon backend.
+
+## Decision
+
+- **Tauri 2** for the desktop shell (tiny native-webview binary, cross-platform,
+  first-class global-shortcut + tray plugins), with **Bun** as the package manager /
+  runtime and **Vite** as the bundler. Bun alone can't provide a global hotkey or tray,
+  so a webview wrapper is required; Tauri is the lightest capable one.
+- **Solid.js** for the UI (fine-grained reactivity, small runtime), **Tailwind v4**,
+  **TypeScript 7** (`tsgo`) for type-checking only, **Biome** + **knip** as gates.
+- **Thin daemon client**, same REST + WebSocket surface as the Avalonia UI. Plain
+  `fetch`/`WebSocket` so the same SPA runs in Tauri and any browser; Tauri-only behavior
+  (paste, hide, hotkey rebind) sits behind a runtime shim.
+- **Two additive daemon changes only**: loopback-only CORS, and serving the built SPA at
+  `/app`. No existing endpoint changed.
+- **Paste-into-source** via the Rust `enigo` crate (hide → focus returns → Ctrl/Cmd+V).
+
+## Consequences
+
+- The web UI reaches feature parity with the native picker and runs on Windows/macOS/
+  Linux, in a Tauri window or any browser at `http://127.0.0.1:8787/app`.
+- Plugin **detectors** work transparently (daemon-side); plugin **actions** (.NET) do
+  not load in the web runtime — built-ins are reimplemented in TS, web JS-plugins TBD.
+- A webview show-cycle won't match the native picker's ~14 ms; the web UI is not held to
+  the single-digit-ms bar.
+- Building the desktop app needs Rust + the platform's webview/C++ build tools (on
+  Windows, the Visual Studio C++ Build Tools) — a heavier prerequisite than the .NET
+  stack. CI runs the frontend gates (Bun + tsgo + Biome + knip + Vite build); the Rust
+  shell is compiled separately.

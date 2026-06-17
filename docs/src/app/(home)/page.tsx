@@ -32,6 +32,11 @@ const features = [
     body: 'Detectors and Ctrl+K actions load from external assemblies through a small public contract. Personal features stay in a private plugin.',
     icon: '🧩',
   },
+  {
+    title: 'Native or web',
+    body: 'A native Avalonia picker, plus a Solid + Tauri web UI with full parity — wrapped as a desktop app, or opened in any browser at /app.',
+    icon: '🌐',
+  },
 ];
 
 const protocols = [

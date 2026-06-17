@@ -7,8 +7,9 @@ system clipboard, stores typed history in SQLite, and exposes everything over a 
 **REST**, **WebSocket/SSE**, and **MCP** — so the picker UI, the CLI, editor extensions, and AI
 agents are all just clients of the same contract. Nothing is hidden behind a private backdoor.
 
-> Status: early development. The daemon (Phase 1) is the current focus; the cross-platform UI
-> and the two documentation sites follow. See the plan and ADRs under `engineering/`.
+> The daemon, a native **Avalonia** picker, a **Solid + Tauri** web UI, the CLI, MCP
+> (stdio + HTTP), a plugin host, and two docs sites all ship. See the ADRs under
+> `engineering/`.
 
 ## Why
 
@@ -25,8 +26,10 @@ agents are all just clients of the same contract. Nothing is hidden behind a pri
 daemon/        clipboard watcher + SQLite history + REST/WS(SSE)/MCP server (.NET 10)
 protocol/      shared domain model + plugin contract (IClipDetector / IClipAction)
 cli/           clipwell list/pin/clear — a reference API consumer
-ui/            picker + settings (cross-platform; stack TBD)
+ui/            native picker (Avalonia 12, cross-platform)
+webui/         web-view picker (Solid + Vite + Tailwind, Bun) wrapped with Tauri 2
 mcp/           stdio MCP wrapper that proxies to the running daemon
+plugins/       sample plugin (IClipDetector / IClipAction) + plugin docs
 docs/          user-facing feature documentation site
 engineering/   how-it-was-built engineering site (architecture, ADRs, perf)
 ```
@@ -38,8 +41,18 @@ Requires the [.NET 10 SDK](https://dotnet.microsoft.com/download).
 ```sh
 dotnet build
 dotnet run --project daemon      # clipboard daemon on http://127.0.0.1:8787
-dotnet run --project ui          # the picker (connects to the daemon)
+dotnet run --project ui          # the native picker (connects to the daemon)
 dotnet run --project cli -- list # reference CLI client
+```
+
+### Web UI
+
+The web UI ([`webui/`](./webui)) is a second picker on a web stack. Open it in any
+browser at `http://127.0.0.1:8787/app` while the daemon runs, or build the desktop app:
+
+```sh
+cd webui && bun install
+bun run tauri dev                # desktop app (needs Rust + platform webview tools)
 ```
 
 ## API surface
@@ -51,10 +64,10 @@ The daemon exposes the same history three ways:
   [`openapi/clipwell.v1.json`](./openapi/clipwell.v1.json)).
 - **Live** — `GET /api/clipboard/stream` (SSE) and `/api/clipboard/ws` (WebSocket)
   push a `clipboard.changed` event on every capture.
-- **MCP** — the `mcp/` project is a stdio MCP server exposing `clipboard_recent`,
-  `clipboard_search`, `clipboard_get_text`, and `clipboard_clear`. Point an MCP
-  client (Claude Desktop / Claude Code) at the built `Clipwell.Mcp` executable; it
-  proxies to the running daemon (`CLIPWELL_API`, default `http://127.0.0.1:8787`).
+- **MCP** — over HTTP/SSE in-daemon at `POST /mcp`, or the `mcp/` stdio server, both
+  exposing `clipboard_recent`, `clipboard_search`, `clipboard_get_text`, and
+  `clipboard_clear`. Point an MCP client at the `/mcp` URL or the built `Clipwell.Mcp`
+  executable (`CLIPWELL_API`, default `http://127.0.0.1:8787`).
 
 ## License
 

@@ -15,6 +15,9 @@ rewrite — the WPF code is reference only, kept in the windows-settings repo.
 - `cli/` — reference API consumer.
 - `mcp/` — stdio MCP server (ModelContextProtocol SDK) exposing clipboard tools;
   proxies to the daemon over REST. See ADR-0003.
+- `webui/` — web-view picker: Solid + Vite + Tailwind v4, **Bun** PM, **TypeScript 7**
+  (`tsgo` type-check only), Biome + knip, **Tauri 2** desktop shell. NOT in `.slnx`
+  (separate toolchain). Thin daemon client (same REST/WS). See ADR-0007 + "Web UI" below.
 - `openapi/clipwell.v1.json` — checked-in spec, regenerated from `GET /openapi/v1.json`.
 - `engineering/content/adr/` — Architecture Decision Records (MADR). Write one per
   decision, at decision time (docs-as-you-build).
@@ -163,6 +166,23 @@ pwsh bench/run-bench.ps1        # measures REST latency + picker show-cycle
   and note why. Never let the warm-show latency leave single digits (ms) without a
   recorded, justified reason — it is the product's core promise.
 - Always run against an isolated `CLIPWELL_DATA_DIR`, never real history.
+
+## Web UI (`webui/`)
+Second front-end (additive; the Avalonia `ui/` stays). Same daemon, full parity.
+- **Build/run:** `cd webui && bun install`. `bun run build` → `webui/dist`. Gates:
+  `bun run typecheck` (tsgo), `bun run lint` (Biome), `bun run knip`. Tauri:
+  `bun run tauri dev|build`.
+- **Bun/Rust are NOT on the harness PATH** — prepend the bun dir
+  (`…\WinGet\Packages\Oven-sh.Bun_*\bun-windows-x64`) and `~/.cargo/bin` per command.
+- **In-browser:** the daemon serves `dist` at `/app` (resolves `CLIPWELL_WEBUI_DIR`,
+  `wwwroot/app`, or dev `webui/dist`) with loopback CORS. Open `127.0.0.1:8787/app`.
+- **Tauri shell** (`src-tauri/`, Rust): global hotkey, tray, hide-on-blur, `enigo`
+  paste-back; commands `paste_and_hide`/`hide_window`/`open_external`/`set_hotkey`.
+  Frontend bridges via `__TAURI_INTERNALS__.invoke` (`src/lib/platform.ts`), no-op in
+  a browser. **Needs Rust + MSVC C++ Build Tools (link.exe) on Windows** — not the
+  .NET SDK. Plugin detectors flow through (daemon-side); plugin actions are .NET-only.
+- Don't add `webui/` to `clipwell.slnx`. `dist`, `node_modules`, `src-tauri/target`
+  are gitignored.
 
 ## CI (cross-platform)
 `.github/workflows/ci.yml` builds `clipwell.slnx` and runs a daemon smoke test on
