@@ -13,6 +13,10 @@ name: Screenshots
 # 'macos' / 'linux' to DEFAULT_SURFACES in docs/src/components/shot-switcher.tsx.
 on:
   workflow_dispatch:
+  # TEMPORARY (remove before merge): lets the workflow run from the feature branch,
+  # since workflow_dispatch only resolves workflows on the default branch.
+  push:
+    branches: [feat/multi-surface-screenshots]
 
 permissions:
   contents: write
