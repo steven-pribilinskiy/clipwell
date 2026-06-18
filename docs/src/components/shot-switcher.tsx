@@ -28,7 +28,8 @@ const LABELS: Record<Surface, string> = {
 };
 
 // Canonical ordering; only surfaces with committed media should be listed here.
-export const DEFAULT_SURFACES: Surface[] = ['windows', 'web'];
+// (macOS native pending — CI screen-recording permission blocks its capture.)
+export const DEFAULT_SURFACES: Surface[] = ['windows', 'linux', 'web'];
 
 export function ShotSwitcher({
   name,
