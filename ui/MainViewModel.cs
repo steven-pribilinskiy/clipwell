@@ -218,9 +218,15 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Apply persisted UI preferences (default view + grouping) and refresh.</summary>
     public void ApplyPreferences(ClipboardSettings s)
     {
-        IsDetail = s.DefaultView == "detail";
-        var g = GroupOptions.FirstOrDefault(o => o.Value == s.DefaultGroup);
-        if (g is not null) SelectedGroup = g;
+        // Screenshot-capture env vars win over saved prefs (like CLIPWELL_THEME) so a
+        // forced state survives the async settings load that runs after the window opens.
+        if (System.Environment.GetEnvironmentVariable("CLIPWELL_VIEW") is null)
+            IsDetail = s.DefaultView == "detail";
+        if (System.Environment.GetEnvironmentVariable("CLIPWELL_GROUP") is null)
+        {
+            var g = GroupOptions.FirstOrDefault(o => o.Value == s.DefaultGroup);
+            if (g is not null) SelectedGroup = g;
+        }
         ApplyFilter(); // rebuild rows so metadata toggles take effect
     }
 
