@@ -25,7 +25,9 @@ export function DiagnosticsModal(props: { itemCount: number; onClose: () => void
               fallback={<div class="opacity-80">Unreachable — is it running?</div>}
             >
               <div class="opacity-80">status: {health()?.status}</div>
-              <div class="opacity-80 break-all">db: {health()?.db}</div>
+              <div class="opacity-80 break-all" data-testid="diag-db">
+                db: {health()?.db}
+              </div>
               <div class="opacity-80">subscribers: {health()?.subscribers}</div>
             </Show>
           </div>

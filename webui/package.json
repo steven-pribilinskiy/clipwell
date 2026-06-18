@@ -12,6 +12,8 @@
     "format": "biome check --write .",
     "knip": "knip",
     "check": "bun run typecheck && bun run lint && bun run knip",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
     "tauri": "tauri"
   },
   "dependencies": {
@@ -19,6 +21,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.0",
+    "@playwright/test": "^1.61.0",
     "@tailwindcss/vite": "^4.3.1",
     "@tauri-apps/cli": "^2.11.2",
     "@typescript/native-preview": "^7.0.0-dev.20260617.2",

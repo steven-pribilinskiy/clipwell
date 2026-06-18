@@ -2,3 +2,9 @@ node_modules/
 dist/
 src-tauri/target/
 *.log
+
+# Playwright run artifacts (the committed baselines under tests/__screenshots__ stay tracked)
+test-results/
+playwright-report/
+blob-report/
+.playwright/

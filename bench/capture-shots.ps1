@@ -11,10 +11,19 @@ $repo = Split-Path $PSScriptRoot -Parent
 $daemonExe = Join-Path $repo 'daemon\bin\Release\net10.0\Clipwell.Daemon.exe'
 $uiExe     = Join-Path $repo 'ui\bin\Release\net10.0\Clipwell.Ui.exe'
 $outDir    = Join-Path $repo 'docs\public\media'
+$shotsDir  = Join-Path $outDir 'shots'
 $port = 8789
 $base = "http://127.0.0.1:$port"
 
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+
+# Per-state path for the Windows native surface: media/shots/<state>/windows-<theme>.png.
+# (macOS/Linux native + web are captured by their own scripts into the same folders.)
+function ShotPath($state, $theme) {
+    $dir = Join-Path $shotsDir $state
+    New-Item -ItemType Directory -Force -Path $dir | Out-Null
+    return (Join-Path $dir "windows-$theme.png")
+}
 $dataDir = Join-Path $env:TEMP "clipwell-shots-$(Get-Random)"
 New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
 $env:CLIPWELL_DATA_DIR    = $dataDir
@@ -121,14 +130,14 @@ try {
         $env:CLIPWELL_SHOW_SETTINGS = '0'; $env:CLIPWELL_QUICKLOOK = '0'; $env:CLIPWELL_VIEW = 'compact'
         Start-Process -FilePath $uiExe -WindowStyle Normal -RedirectStandardOutput (Join-Path $dataDir "u1-$theme.out") -RedirectStandardError (Join-Path $dataDir "u1-$theme.err")
         Start-Sleep -Seconds 7
-        Write-Host "picker-$theme.png: $([Shot]::Grab('Clipwell', (Join-Path $outDir "picker-$theme.png")))"
+        Write-Host "picker/windows-$theme.png: $([Shot]::Grab('Clipwell', (ShotPath 'picker' $theme)))"
         Stop-Ui; Start-Sleep -Seconds 2
 
         # Picker — detail
         $env:CLIPWELL_VIEW = 'detail'
         Start-Process -FilePath $uiExe -WindowStyle Normal -RedirectStandardOutput (Join-Path $dataDir "u2-$theme.out") -RedirectStandardError (Join-Path $dataDir "u2-$theme.err")
         Start-Sleep -Seconds 7
-        Write-Host "detail-$theme.png: $([Shot]::Grab('Clipwell', (Join-Path $outDir "detail-$theme.png")))"
+        Write-Host "detail/windows-$theme.png: $([Shot]::Grab('Clipwell', (ShotPath 'detail' $theme)))"
         Stop-Ui; Start-Sleep -Seconds 2
         $env:CLIPWELL_VIEW = 'compact'
 
@@ -136,7 +145,7 @@ try {
         $env:CLIPWELL_GROUP = 'source'
         Start-Process -FilePath $uiExe -WindowStyle Normal -RedirectStandardOutput (Join-Path $dataDir "ug-$theme.out") -RedirectStandardError (Join-Path $dataDir "ug-$theme.err")
         Start-Sleep -Seconds 7
-        Write-Host "grouped-$theme.png: $([Shot]::Grab('Clipwell', (Join-Path $outDir "grouped-$theme.png")))"
+        Write-Host "grouped/windows-$theme.png: $([Shot]::Grab('Clipwell', (ShotPath 'grouped' $theme)))"
         Stop-Ui; Start-Sleep -Seconds 2
         $env:CLIPWELL_GROUP = ''
 
@@ -144,7 +153,7 @@ try {
         $env:CLIPWELL_ACTIONS = '1'
         Start-Process -FilePath $uiExe -WindowStyle Normal -RedirectStandardOutput (Join-Path $dataDir "ua-$theme.out") -RedirectStandardError (Join-Path $dataDir "ua-$theme.err")
         Start-Sleep -Seconds 8
-        Write-Host "actions-$theme.png: $([Shot]::Grab('Clipwell', (Join-Path $outDir "actions-$theme.png")))"
+        Write-Host "actions/windows-$theme.png: $([Shot]::Grab('Clipwell', (ShotPath 'actions' $theme)))"
         Stop-Ui; Start-Sleep -Seconds 2
         $env:CLIPWELL_ACTIONS = '0'
 
@@ -152,7 +161,7 @@ try {
         $env:CLIPWELL_QUICKLOOK = '1'
         Start-Process -FilePath $uiExe -WindowStyle Normal -RedirectStandardOutput (Join-Path $dataDir "uq-$theme.out") -RedirectStandardError (Join-Path $dataDir "uq-$theme.err")
         Start-Sleep -Seconds 7
-        Write-Host "quicklook-$theme.png: $([Shot]::Grab('Clipwell', (Join-Path $outDir "quicklook-$theme.png")))"
+        Write-Host "quicklook/windows-$theme.png: $([Shot]::Grab('Clipwell', (ShotPath 'quicklook' $theme)))"
         Stop-Ui; Start-Sleep -Seconds 2
         $env:CLIPWELL_QUICKLOOK = '0'
 
@@ -160,7 +169,7 @@ try {
         $env:CLIPWELL_SHOW_SETTINGS = '1'
         Start-Process -FilePath $uiExe -WindowStyle Normal -RedirectStandardOutput (Join-Path $dataDir "u3-$theme.out") -RedirectStandardError (Join-Path $dataDir "u3-$theme.err")
         Start-Sleep -Seconds 7
-        Write-Host "settings-$theme.png: $([Shot]::Grab('Clipwell Settings', (Join-Path $outDir "settings-$theme.png")))"
+        Write-Host "settings/windows-$theme.png: $([Shot]::Grab('Clipwell Settings', (ShotPath 'settings' $theme)))"
         Stop-Ui; Start-Sleep -Seconds 2
         $env:CLIPWELL_SHOW_SETTINGS = '0'
 
@@ -180,7 +189,7 @@ try {
         $env:CLIPWELL_SHOW_DIAG = '1'
         Start-Process -FilePath $uiExe -WindowStyle Normal -RedirectStandardOutput (Join-Path $dataDir "u4-$theme.out") -RedirectStandardError (Join-Path $dataDir "u4-$theme.err")
         Start-Sleep -Seconds 7
-        Write-Host "diagnostics-$theme.png: $([Shot]::Grab('Clipwell Diagnostics', (Join-Path $outDir "diagnostics-$theme.png")))"
+        Write-Host "diagnostics/windows-$theme.png: $([Shot]::Grab('Clipwell Diagnostics', (ShotPath 'diagnostics' $theme)))"
         Stop-Ui; Start-Sleep -Seconds 2
         $env:CLIPWELL_SHOW_DIAG = '0'
     }

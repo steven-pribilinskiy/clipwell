@@ -7,12 +7,10 @@ The picker is a pre‑warmed window that appears the instant you press the hotke
 History loads a page at a time and **fetches older items as you scroll**, so even a
 very long history stays fast (the list is virtualized).
 
-<ThemedShot
+<ShotSwitcher
   name="picker"
   alt="The Clipwell picker showing a search box, filter tabs, and a list of typed clipboard items"
-  width={862}
-  height={1016}
-  caption="The picker: search, filter tabs, and typed history — shown here in your current theme."
+  caption="The picker: search, filter tabs, and typed history. Switch surfaces to compare the native app with the web UI."
 />
 
 ## Find and paste something you copied earlier
@@ -28,10 +26,10 @@ very long history stays fast (the list is virtualized).
 
 <ThemedClip
   name="usage"
-  poster="picker"
+  poster="shots/picker/windows"
   width={862}
   height={1016}
-  caption="Type to filter the history live — here narrowing to the URL, then clearing."
+  caption="Type to filter the history live — here narrowing to the URL, then clearing (native UI)."
 />
 
 ## Recognize items at a glance
@@ -63,11 +61,9 @@ left, a full preview pane on the right) with the **▦ Detail / ▤ Compact** bu
 The preview pane shows the selected item's kind, source, and full content — the
 complete text, or a full‑resolution image.
 
-<ThemedShot
+<ShotSwitcher
   name="detail"
   alt="Clipwell in Detail view: the history list on the left and a preview pane on the right showing the selected item's full content"
-  width={1372}
-  height={1016}
   caption="Detail view — list plus a live preview pane."
 />
 
@@ -78,11 +74,9 @@ item and press **Ctrl+Y** for **Quick Look** — a full‑window overlay with th
 complete text (scrollable) or a full‑resolution image. Press **Ctrl+Y** again,
 **Escape**, or click the backdrop to close.
 
-<ThemedShot
+<ShotSwitcher
   name="quicklook"
   alt="Quick Look overlay showing the selected item's full content over a dimmed picker"
-  width={862}
-  height={1016}
   caption="Quick Look (Ctrl+Y) — a fast full preview without leaving the list."
 />
 
@@ -94,11 +88,9 @@ browser** and **Copy domain** for links, **Open file or folder** for paths, and
 **Copy to clipboard** for anything. The set is extensible: plugins add their own
 actions through the same contract (see the engineering docs).
 
-<ThemedShot
+<ShotSwitcher
   name="actions"
   alt="The Ctrl+K action palette over a selected link, listing Open in browser, Copy to clipboard, and Copy domain"
-  width={862}
-  height={1016}
   caption="The Ctrl+K action palette — content-aware actions for the selected item."
 />
 
@@ -114,11 +106,9 @@ The **type dropdown** filters by detected kind, and the **grouping dropdown** ca
 group the list **by date** (Today / Yesterday / Previous 7 days / …) or **by source
 app**, with a header above each group.
 
-<ThemedShot
+<ShotSwitcher
   name="grouped"
   alt="The picker grouped by source app, with a header above each app's items"
-  width={862}
-  height={1016}
   caption="Grouped by source app — also available by date."
 />
 
@@ -151,11 +141,9 @@ Open **Settings…** from the tray menu to tune:
 - **Global hotkey** — rebindable: click **Change…** and press a new combo (default
   Alt+Shift+V). Applies live on Windows.
 
-<ThemedShot
+<ShotSwitcher
   name="settings"
   alt="The Clipwell settings window: appearance, default view, grouping, row metadata, retention, and picker position"
-  width={682}
-  height={1016}
   caption="Settings: appearance, view, grouping, metadata, retention, and position."
 />
 
@@ -166,11 +154,9 @@ path) and the picker's **show-cycle timings** from `perf.log` — count, median,
 and max — so you can confirm the picker stays in its single‑digit / one‑frame range.
 Clear the log or refresh from the same window.
 
-<ThemedShot
+<ShotSwitcher
   name="diagnostics"
   alt="The Clipwell diagnostics window showing daemon status and picker show-cycle timings"
-  width={802}
-  height={956}
   caption="Diagnostics — daemon health and real show-cycle latencies."
 />
 

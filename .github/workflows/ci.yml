@@ -70,3 +70,37 @@ jobs:
       - name: Build
         working-directory: webui
         run: bun run build
+
+  web-visual:
+    name: web visual regression
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+      # global-setup runs `dotnet <Clipwell.Daemon.dll>` to serve the seeded SPA.
+      - name: Build daemon (Release)
+        run: dotnet build daemon/Clipwell.Daemon.csproj -c Release
+      - uses: oven-sh/setup-bun@v2
+      - name: Install
+        working-directory: webui
+        run: bun install --frozen-lockfile
+      - name: Build SPA
+        working-directory: webui
+        run: bun run build
+      - name: Install Playwright Chromium
+        working-directory: webui
+        run: bun x playwright install --with-deps chromium
+      # Strict check against the committed Linux baselines (tests/__screenshots__/*-linux.png).
+      # Seed/refresh those baselines with the "Screenshots" workflow (runs test:visual:update).
+      - name: Visual regression
+        working-directory: webui
+        run: bun run test:visual
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: webui/playwright-report
+          retention-days: 7
