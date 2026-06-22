@@ -1,17 +1,16 @@
 'use client';
 import { usePathname } from 'next/navigation';
+import { MEDIA_BASE } from '@/lib/media';
 
 /**
  * A short, muted, looping usage clip that swaps with the docs theme (same idea
  * as <ThemedShot>, for video). Pass the base name (without `-light`/`-dark` or
- * extension): `name="usage"` → `/media/usage-light.webm` + `/media/usage-dark.webm`.
+ * extension): `name="usage"` → `<MEDIA_BASE>/usage-light.webm` + `…-dark.webm`.
  *
- * `next/image` would prefix the Pages basePath automatically; <video> does not,
- * so we read it from `next.config`'s injected basePath via the router pathname's
- * origin is not enough — instead we rely on Next's `assetPrefix`/`basePath` being
- * applied at build by referencing the public path with the configured prefix.
+ * Media is hosted on `media.aylith.com` (absolute URLs, not in this repo), so
+ * unlike the old local `/media/` paths the <video> src needs no Pages-basePath
+ * prefix — see `@/lib/media`.
  */
-const BASE = process.env.NEXT_PUBLIC_PAGES_BASE ?? '';
 
 export function ThemedClip({
   name,
@@ -30,9 +29,9 @@ export function ThemedClip({
   usePathname();
   const common =
     'rounded-xl border border-fd-border shadow-lg w-full h-auto';
-  const src = (theme: 'light' | 'dark') => `${BASE}/media/${name}-${theme}.webm`;
+  const src = (theme: 'light' | 'dark') => `${MEDIA_BASE}/${name}-${theme}.webm`;
   const posterSrc = (theme: 'light' | 'dark') =>
-    poster ? `${BASE}/media/${poster}-${theme}.png` : undefined;
+    poster ? `${MEDIA_BASE}/${poster}-${theme}.png` : undefined;
   return (
     <figure className="my-6">
       <video
