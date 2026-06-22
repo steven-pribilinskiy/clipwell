@@ -4,6 +4,10 @@
 # generated content
 .source
 
+# Themed media (screenshots + usage clips) live on media.aylith.com, NOT in git.
+# The capture scripts write here locally; upload via infra-hub/stacks/media/upload.sh.
+/public/media/
+
 # test & build
 /coverage
 /.next/
