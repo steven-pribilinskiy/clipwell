@@ -1,5 +1,13 @@
 # Clipwell
 
+<!-- aylith-handbook:start -->
+> **📖 Aylith handbook (authoritative).** This repo is part of the `aylith-labs` lab. Before any
+> cross-repo, catalog, design-system, CI/runner, or data-flow work you **must** consult the org
+> handbook — the single source of truth for these conventions:
+> https://github.com/aylith-labs/aylith-handbook (locally `../aylith-handbook/`, skill `aylith-labs`).
+<!-- aylith-handbook:end -->
+
+
 Cross-platform clipboard-history product: a headless **daemon** plus thin clients
 (picker UI, CLI, MCP), all speaking one public API (REST + WebSocket/SSE + MCP).
 Extracted from `windows-settings/clipwell` (a Windows-only WPF app) as a clean
